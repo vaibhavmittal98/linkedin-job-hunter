@@ -82,7 +82,7 @@ export default function SchedulePage() {
         <h2>Create Schedule</h2>
         <label>LinkedIn Search URL</label>
         <p style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.5rem" }}>
-          Paste your LinkedIn jobs search URL from an incognito window. The 24h filter will be applied automatically for scheduled runs.
+          Paste your LinkedIn jobs search URL from an incognito window. Include &f_TPR=r86400 in the URL if you only want jobs from the last 24 hours.
         </p>
         <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://www.linkedin.com/jobs/search?keywords=..." />
         <label>Max results (min 10)</label>
