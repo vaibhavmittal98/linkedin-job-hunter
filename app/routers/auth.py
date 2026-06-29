@@ -8,6 +8,7 @@ from app.models import UserProfile, Job
 from app.auth import hash_password, verify_password, create_access_token, get_current_user
 
 UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 router = APIRouter(prefix="/api/auth")
 
