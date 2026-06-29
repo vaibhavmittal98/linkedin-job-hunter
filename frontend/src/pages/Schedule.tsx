@@ -74,8 +74,7 @@ export default function SchedulePage() {
     <>
       <h1>Scheduled Scrapes</h1>
       <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
-        Schedule automatic daily scrapes. Only jobs posted in the last 24 hours are fetched, and duplicates are skipped automatically.
-        New jobs are scored against your CV as they come in.
+        Schedule automatic daily scrapes. Duplicates are skipped automatically. New jobs are scored against your CV as they come in.
       </p>
 
       <div className="card">
