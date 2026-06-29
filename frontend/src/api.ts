@@ -57,11 +57,11 @@ export async function fetchJob(id: number): Promise<Job> {
   return res.json();
 }
 
-export async function triggerScrape(keywords: string, location = "", maxResults = 10, scrapeAll = false, splitByLocation = false, splitCountry = "") {
+export async function triggerScrape(linkedinUrl: string, maxResults = 10, scrapeAll = false, splitByLocation = false, splitCountry = "") {
   const res = await fetch(`${API_BASE}/scrape`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ keywords, location, max_results: maxResults, scrape_all: scrapeAll, split_by_location: splitByLocation, split_country: splitCountry }),
+    body: JSON.stringify({ linkedin_url: linkedinUrl, max_results: maxResults, scrape_all: scrapeAll, split_by_location: splitByLocation, split_country: splitCountry }),
   });
   return res.json();
 }

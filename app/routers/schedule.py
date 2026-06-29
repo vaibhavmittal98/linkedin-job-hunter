@@ -13,13 +13,12 @@ router = APIRouter(prefix="/api/schedules")
 
 
 class ScheduleRequest(BaseModel):
-    keywords: str
-    location: str = ""
+    linkedin_url: str
     max_results: int = 10
     scrape_all: bool = False
     split_by_location: bool = False
     split_country: str = ""
-    hour: int = 6
+    hour: int = 2
     minute: int = 0
 
 
@@ -29,7 +28,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
     if not user.cv_text:
         raise HTTPException(400, "Upload your CV first")
 
-    job_id = f"scrape_{user.username}_{req.keywords.replace(' ', '_')}"
+    job_id = f"scrape_{user.username}_{hash(req.linkedin_url) % 10000}"
 
     # Save to DB
     existing = db.query(ScheduledScrape).filter(ScheduledScrape.job_id == job_id).first()
@@ -39,8 +38,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
     schedule = ScheduledScrape(
         job_id=job_id,
         username=user.username,
-        keywords=req.keywords,
-        location=req.location,
+        linkedin_url=req.linkedin_url,
         max_results=req.max_results,
         scrape_all=req.scrape_all,
         split_by_location=req.split_by_location,
@@ -57,8 +55,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
         job_id=job_id,
         hour=req.hour,
         minute=req.minute,
-        keywords=req.keywords,
-        location=req.location,
+        linkedin_url=req.linkedin_url,
         max_results=req.max_results,
         scrape_all=req.scrape_all,
         split_by_location=req.split_by_location,
@@ -76,8 +73,7 @@ def get_schedules(user: UserProfile = Depends(get_current_user), db: Session = D
     return [
         {
             "id": s.job_id,
-            "keywords": s.keywords,
-            "location": s.location,
+            "linkedin_url": s.linkedin_url,
             "hour": s.hour,
             "minute": s.minute,
             "scrape_all": s.scrape_all,

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 
 interface Schedule {
   id: string;
-  keywords: string;
-  location: string;
+  linkedin_url: string;
   hour: number;
   minute: number;
   scrape_all: boolean;
@@ -24,8 +23,7 @@ function authHeaders(): HeadersInit {
 
 export default function SchedulePage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [keywords, setKeywords] = useState("");
-  const [location, setLocation] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [maxResults, setMaxResults] = useState(10);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [hour, setHour] = useState("2");
@@ -48,7 +46,7 @@ export default function SchedulePage() {
     const res = await fetch("/api/schedules", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ keywords, location, max_results: maxResults, scrape_all: scrapeAll, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+      body: JSON.stringify({ linkedin_url: linkedinUrl, max_results: maxResults, scrape_all: scrapeAll, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -82,10 +80,11 @@ export default function SchedulePage() {
 
       <div className="card">
         <h2>Create Schedule</h2>
-        <label>Keywords</label>
-        <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="e.g. Software Engineer" />
-        <label>Location</label>
-        <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Stockholm" />
+        <label>LinkedIn Search URL</label>
+        <p style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.5rem" }}>
+          Paste your LinkedIn jobs search URL from an incognito window. The 24h filter will be applied automatically for scheduled runs.
+        </p>
+        <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://www.linkedin.com/jobs/search?keywords=..." />
         <label>Max results (min 10)</label>
         <input type="number" min={10} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 10)} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
@@ -98,7 +97,7 @@ export default function SchedulePage() {
           <span style={{ alignSelf: "center" }}>:</span>
           <input type="text" maxLength={2} value={minute} onChange={(e) => setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="0" style={{ width: "60px", textAlign: "center" }} />
         </div>
-        <button className="btn" onClick={handleCreate} disabled={!keywords}>Create Schedule</button>
+        <button className="btn" onClick={handleCreate} disabled={!linkedinUrl}>Create Schedule</button>
         {message && <p style={{ marginTop: "0.5rem", color: "green" }}>{message}</p>}
       </div>
 
@@ -109,7 +108,7 @@ export default function SchedulePage() {
           <div key={s.id}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
               <div style={{ cursor: "pointer" }} onClick={() => handleShowHistory(s.id)}>
-                <strong>{s.keywords}</strong> — {s.location || "Any location"}
+                <strong>{s.linkedin_url.length > 60 ? s.linkedin_url.substring(0, 60) + "..." : s.linkedin_url}</strong>
                 <p style={{ fontSize: "0.8rem", color: "#666" }}>
                   Runs daily at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"}
                 </p>

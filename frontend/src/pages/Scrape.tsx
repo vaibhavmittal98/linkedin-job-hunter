@@ -2,8 +2,7 @@ import { useState } from "react";
 import { triggerScrape } from "../api";
 
 export default function Scrape() {
-  const [keywords, setKeywords] = useState("");
-  const [location, setLocation] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [maxResults, setMaxResults] = useState(10);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [splitByLocation, setSplitByLocation] = useState(false);
@@ -14,7 +13,7 @@ export default function Scrape() {
   const handleScrape = async () => {
     setLoading(true);
     setResult(null);
-    const res = await triggerScrape(keywords, location, maxResults, scrapeAll, splitByLocation, splitCountry);
+    const res = await triggerScrape(linkedinUrl, maxResults, scrapeAll, splitByLocation, splitCountry);
     setResult(res);
     setLoading(false);
   };
@@ -23,15 +22,20 @@ export default function Scrape() {
     <>
       <h1>Scrape LinkedIn Jobs</h1>
       <div className="card">
-        <label>Keywords</label>
-        <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="e.g. Python Developer" />
-        <label>Location {splitByLocation && <span style={{ fontSize: "0.8rem", color: "#888" }}>(overridden by country split)</span>}</label>
-        <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Amsterdam" disabled={splitByLocation} />
+        <label>LinkedIn Search URL</label>
+        <p style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.5rem" }}>
+          Go to LinkedIn jobs search in an incognito window, apply your filters (keywords, location, date posted, etc.), then copy the full URL from the address bar.
+        </p>
+        <input
+          value={linkedinUrl}
+          onChange={(e) => setLinkedinUrl(e.target.value)}
+          placeholder="https://www.linkedin.com/jobs/search?keywords=Software%20Engineer&location=Stockholm&..."
+        />
         <label>Max results (min 10)</label>
         <input type="number" min={10} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 10)} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
-          Scrape all available {splitByLocation ? "(per city, can be expensive)" : "(up to 1000)"}
+          Scrape all available {splitByLocation ? "(per city, can be expensive)" : "(up to ~300)"}
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={splitByLocation} onChange={(e) => setSplitByLocation(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
@@ -39,11 +43,11 @@ export default function Scrape() {
         </label>
         {splitByLocation && (
           <>
-            <label>Country code (e.g. SE, US, DE)</label>
+            <label>Country code (e.g. SE, NL, DE)</label>
             <input value={splitCountry} onChange={(e) => setSplitCountry(e.target.value.toUpperCase())} placeholder="SE" />
           </>
         )}
-        <button className="btn" onClick={handleScrape} disabled={loading || !keywords || (splitByLocation && !splitCountry)}>
+        <button className="btn" onClick={handleScrape} disabled={loading || !linkedinUrl || (splitByLocation && !splitCountry)}>
           {loading ? "Starting..." : "Start Scrape"}
         </button>
         {splitByLocation && !splitCountry && (

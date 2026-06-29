@@ -7,7 +7,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
-def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: str, location: str, max_results: int, scrape_all: bool, split_by_location: bool, split_country: str, cv_text: str):
+def add_scrape_schedule(job_id: str, hour: int, minute: int, linkedin_url: str, max_results: int, scrape_all: bool, split_by_location: bool, split_country: str, cv_text: str):
     """Add or replace a scheduled scrape job."""
     from app.routers.jobs import _run_scrape
 
@@ -18,7 +18,7 @@ def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: str, loca
         _run_scrape,
         trigger=CronTrigger(hour=hour, minute=minute),
         id=job_id,
-        args=[keywords, location, max_results, scrape_all, split_by_location, split_country, cv_text, job_id, True],
+        args=[linkedin_url, max_results, scrape_all, split_by_location, split_country, cv_text, job_id, True],
         replace_existing=True,
     )
 
@@ -52,8 +52,7 @@ def reload_schedules_from_db():
                 job_id=s.job_id,
                 hour=s.hour,
                 minute=s.minute,
-                keywords=s.keywords,
-                location=s.location,
+                linkedin_url=s.linkedin_url,
                 max_results=s.max_results,
                 scrape_all=s.scrape_all,
                 split_by_location=s.split_by_location,

@@ -57,8 +57,7 @@ class UserProfileOut(UserProfileIn):
 
 
 class ScrapeRequest(BaseModel):
-    keywords: str
-    location: str = ""
+    linkedin_url: str
     max_results: int = 10
     scrape_all: bool = False
     split_by_location: bool = False
