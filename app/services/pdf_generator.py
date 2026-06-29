@@ -57,16 +57,22 @@ def generate_pdf(content: str, job_title: str, company: str, cv_text: str = "") 
     if info["contact"]:
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(80, 80, 80)
-        # Split contact into parts, make linkedin a clickable short link
-        parts = info["contact"].split("|")
-        contact_line = ""
+        parts = [p.strip() for p in info["contact"].split("|") if p.strip()]
+        linkedin_url = ""
+        display_parts = []
         for part in parts:
-            part = part.strip()
-            if "linkedin" in part.lower():
-                part = "LinkedIn"
-            contact_line += part + " | "
-        contact_line = contact_line.rstrip(" | ")
+            if "linkedin.com" in part.lower():
+                linkedin_url = part if part.startswith("http") else "https://" + part
+            else:
+                display_parts.append(part)
+
+        contact_line = " | ".join(display_parts)
         pdf.cell(0, 5, _sanitize(contact_line), ln=True, align="C")
+
+        if linkedin_url:
+            pdf.set_text_color(40, 80, 180)
+            pdf.cell(0, 5, "LinkedIn Profile", ln=True, align="C", link=linkedin_url)
+            pdf.set_text_color(80, 80, 80)
 
     # Line separator
     pdf.ln(5)
