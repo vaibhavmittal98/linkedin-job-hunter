@@ -32,10 +32,10 @@ def scrape_linkedin_jobs(keywords: str, location: str = "", max_results: int = 1
     run_data = start_resp.json()["data"]
     run_id = run_data["id"]
 
-    # Poll until finished (max 5 minutes)
+    # Poll until finished (no timeout — let it run)
     import time
-    for _ in range(60):
-        time.sleep(5)
+    while True:
+        time.sleep(10)
         status_resp = httpx.get(
             f"https://api.apify.com/v2/actor-runs/{run_id}",
             params={"token": token},
@@ -48,10 +48,6 @@ def scrape_linkedin_jobs(keywords: str, location: str = "", max_results: int = 1
             break
         elif status in ("FAILED", "ABORTED", "TIMED-OUT"):
             return []
-    else:
-        # Timeout — abort the actor to stop burning credits
-        abort_run(run_id)
-        return []
 
     # Fetch dataset items
     dataset_id = status_resp.json()["data"]["defaultDatasetId"]
