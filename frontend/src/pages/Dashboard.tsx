@@ -10,6 +10,7 @@ export default function Dashboard() {
   const [typeFilter, setTypeFilter] = useState("");
   const [locationFilter, setLocationFilter] = useState("");
   const [appliedFilter, setAppliedFilter] = useState("not_applied");
+  const [timeFilter, setTimeFilter] = useState("");
 
   useEffect(() => {
     fetchJobs(minScore).then(setJobs);
@@ -29,7 +30,17 @@ export default function Dashboard() {
       !appliedFilter ||
       (appliedFilter === "applied" && job.applied) ||
       (appliedFilter === "not_applied" && !job.applied);
-    return matchesSearch && matchesSeniority && matchesType && matchesLocation && matchesApplied;
+    const matchesTime = (() => {
+      if (!timeFilter || !job.posted_at) return true;
+      const posted = new Date(job.posted_at);
+      const now = new Date();
+      const diffDays = (now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24);
+      if (timeFilter === "week") return diffDays <= 7;
+      if (timeFilter === "month") return diffDays <= 30;
+      if (timeFilter === "older") return diffDays > 30;
+      return true;
+    })();
+    return matchesSearch && matchesSeniority && matchesType && matchesLocation && matchesApplied && matchesTime;
   });
 
   const seniorityLevels = [...new Set(jobs.map((j) => j.seniority_level).filter(Boolean))];
@@ -70,6 +81,12 @@ export default function Dashboard() {
             <option value="">All</option>
             <option value="applied">Applied</option>
             <option value="not_applied">Not Applied</option>
+          </select>
+          <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
+            <option value="">Any time</option>
+            <option value="week">Last week</option>
+            <option value="month">Last month</option>
+            <option value="older">Older</option>
           </select>
           <div className="score-filter">
             <label>Min score: {minScore}</label>
