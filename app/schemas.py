@@ -1,0 +1,65 @@
+from pydantic import BaseModel
+from datetime import datetime
+
+
+class JobOut(BaseModel):
+    id: int
+    linkedin_id: str | None
+    title: str
+    company: str
+    company_logo: str | None
+    company_url: str | None
+    company_website: str | None
+    location: str | None
+    url: str | None
+    apply_url: str | None
+    description: str | None
+    salary: str | None
+    posted_at: str | None
+    seniority_level: str | None
+    employment_type: str | None
+    job_function: str | None
+    industries: str | None
+    applicants_count: str | None
+    applied: bool
+    relevance_score: float | None
+    score_reason: str | None
+    scraped_at: datetime | None
+
+    class Config:
+        from_attributes = True
+
+
+class CoverLetterOut(BaseModel):
+    id: int
+    job_id: int
+    content: str
+    created_at: datetime | None
+
+    class Config:
+        from_attributes = True
+
+
+class UserProfileIn(BaseModel):
+    name: str
+    title: str
+    summary: str
+    skills: list[str]
+    experience: list[str]
+    preferences: dict
+
+
+class UserProfileOut(UserProfileIn):
+    id: int
+
+    class Config:
+        from_attributes = True
+
+
+class ScrapeRequest(BaseModel):
+    keywords: str
+    location: str = ""
+    max_results: int = 10
+    scrape_all: bool = False
+    split_by_location: bool = False
+    split_country: str = ""
