@@ -33,6 +33,9 @@ def _extract_contact(cv_text: str) -> dict:
             for part in cleaned.split("|"):
                 part = part.strip()
                 if part:
+                    # Ensure linkedin URLs have https://
+                    if "linkedin.com" in part.lower() and not part.startswith("http"):
+                        part = "https://" + part
                     contact_parts.append(part)
     contact = " | ".join(contact_parts) if contact_parts else ""
     return {"name": name, "contact": contact}
@@ -54,7 +57,16 @@ def generate_pdf(content: str, job_title: str, company: str, cv_text: str = "") 
     if info["contact"]:
         pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(80, 80, 80)
-        pdf.cell(0, 5, _sanitize(info["contact"]), ln=True, align="C")
+        # Split contact into parts, make linkedin a clickable short link
+        parts = info["contact"].split("|")
+        contact_line = ""
+        for part in parts:
+            part = part.strip()
+            if "linkedin" in part.lower():
+                part = "LinkedIn"
+            contact_line += part + " | "
+        contact_line = contact_line.rstrip(" | ")
+        pdf.cell(0, 5, _sanitize(contact_line), ln=True, align="C")
 
     # Line separator
     pdf.ln(5)
