@@ -18,7 +18,7 @@ def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: str, loca
         _run_scrape,
         trigger=CronTrigger(hour=hour, minute=minute),
         id=job_id,
-        args=[keywords, location, max_results, scrape_all, split_by_location, split_country, cv_text, job_id],
+        args=[keywords, location, max_results, scrape_all, split_by_location, split_country, cv_text, job_id, True],
         replace_existing=True,
     )
 

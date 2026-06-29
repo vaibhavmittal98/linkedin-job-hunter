@@ -38,7 +38,7 @@ def trigger_scrape(req: ScrapeRequest, background_tasks: BackgroundTasks, db: Se
     return {"status": "started", "message": "Scraping started. Jobs will appear on the dashboard soon."}
 
 
-def _run_scrape(keywords: str, location: str, max_results: int, scrape_all: bool, split_by_location: bool, split_country: str, cv_text: str, schedule_job_id: str = "manual"):
+def _run_scrape(keywords: str, location: str, max_results: int, scrape_all: bool, split_by_location: bool, split_country: str, cv_text: str, schedule_job_id: str = "manual", last_24h: bool = False):
     """Background scrape task."""
     from app.db import SessionLocal
     from app.models import ScrapeRun
@@ -46,7 +46,7 @@ def _run_scrape(keywords: str, location: str, max_results: int, scrape_all: bool
 
     db = SessionLocal()
     try:
-        raw_jobs = scrape_linkedin_jobs(keywords, location, max_results, scrape_all, split_by_location, split_country)
+        raw_jobs = scrape_linkedin_jobs(keywords, location, max_results, scrape_all, split_by_location, split_country, last_24h)
         added = 0
         for raw in raw_jobs:
             existing = db.query(Job).filter(Job.linkedin_id == raw.get("linkedin_id")).first()

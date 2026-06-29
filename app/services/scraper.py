@@ -5,14 +5,18 @@ ACTOR_ID = "curious_coder~linkedin-jobs-scraper"
 BASE_URL = f"https://api.apify.com/v2/actors/{ACTOR_ID}"
 
 
-def scrape_linkedin_jobs(keywords: str, location: str = "", max_results: int = 10, scrape_all: bool = False, split_by_location: bool = False, split_country: str = "") -> list[dict]:
+def scrape_linkedin_jobs(keywords: str, location: str = "", max_results: int = 10, scrape_all: bool = False, split_by_location: bool = False, split_country: str = "", last_24h: bool = False) -> list[dict]:
     """Scrape LinkedIn jobs using curious_coder/linkedin-jobs-scraper on Apify."""
     if not settings.apify_api_token or settings.apify_api_token == "your_apify_token_here":
         return _demo_data(keywords, location, max_results)
 
     token = settings.apify_api_token
+    url = f"https://www.linkedin.com/jobs/search?keywords={keywords}&location={location}"
+    if last_24h:
+        url += "&f_TPR=r86400"
+
     run_input = {
-        "urls": [f"https://www.linkedin.com/jobs/search?keywords={keywords}&location={location}&f_TPR=r86400"],
+        "urls": [url],
         "scrapeCompany": True,
     }
     if not scrape_all:
