@@ -35,9 +35,9 @@ export default function Dashboard() {
       const posted = new Date(job.posted_at);
       const now = new Date();
       const diffDays = (now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24);
+      if (timeFilter === "day") return diffDays <= 1;
       if (timeFilter === "week") return diffDays <= 7;
       if (timeFilter === "month") return diffDays <= 30;
-      if (timeFilter === "older") return diffDays > 30;
       return true;
     })();
     return matchesSearch && matchesSeniority && matchesType && matchesLocation && matchesApplied && matchesTime;
@@ -84,9 +84,9 @@ export default function Dashboard() {
           </select>
           <select value={timeFilter} onChange={(e) => setTimeFilter(e.target.value)}>
             <option value="">Any time</option>
+            <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
             <option value="month">Last month</option>
-            <option value="older">Older</option>
           </select>
           <div className="score-filter">
             <label>Min score: {minScore}</label>
