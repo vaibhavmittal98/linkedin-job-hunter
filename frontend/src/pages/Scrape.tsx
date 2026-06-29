@@ -35,7 +35,7 @@ export default function Scrape() {
         <input type="number" min={10} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 10)} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
-          Scrape all available {splitByLocation ? "(per city, can be expensive)" : "(up to ~300)"}
+          Scrape all available {splitByLocation ? "(per city, can be expensive)" : "(up to 1000)"}
         </label>
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={splitByLocation} onChange={(e) => setSplitByLocation(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
