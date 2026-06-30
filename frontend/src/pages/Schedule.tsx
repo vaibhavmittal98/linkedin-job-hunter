@@ -107,7 +107,7 @@ export default function SchedulePage() {
           <div key={s.id}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
               <div style={{ cursor: "pointer" }} onClick={() => handleShowHistory(s.id)}>
-                <strong>{s.linkedin_url.length > 60 ? s.linkedin_url.substring(0, 60) + "..." : s.linkedin_url}</strong>
+                <strong style={{ wordBreak: "break-all", fontSize: "0.85rem" }}>{s.linkedin_url}</strong>
                 <p style={{ fontSize: "0.8rem", color: "#666" }}>
                   Runs daily at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"}
                 </p>
