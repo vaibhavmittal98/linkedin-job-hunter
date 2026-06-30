@@ -7,7 +7,7 @@ scheduler = BackgroundScheduler()
 scheduler.start()
 
 
-def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, frequency: str = "daily", day_of_week: str = "mon"):
+def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, frequency: str = "daily", day_of_week: str = "mon", user_id: int = None):
     """Add or replace a scheduled scrape job."""
     from app.routers.jobs import _run_scrape
 
@@ -23,7 +23,7 @@ def add_scrape_schedule(job_id: str, hour: int, minute: int, keywords: list[str]
         _run_scrape,
         trigger=trigger,
         id=job_id,
-        args=[keywords, locations, max_results, scrape_all, published_at, cv_text, job_id],
+        args=[keywords, locations, max_results, scrape_all, published_at, cv_text, job_id, user_id],
         replace_existing=True,
     )
 
@@ -66,6 +66,7 @@ def reload_schedules_from_db():
                 cv_text=s.cv_text,
                 frequency=s.frequency or "daily",
                 day_of_week=s.day_of_week or "mon",
+                user_id=s.user_id,
             )
     finally:
         db.close()

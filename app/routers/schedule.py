@@ -40,6 +40,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
 
     schedule = ScheduledScrape(
         job_id=job_id,
+        user_id=user.id,
         username=user.username,
         keywords=json.dumps(req.keywords),
         locations=json.dumps(req.locations),
@@ -68,6 +69,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
         cv_text=user.cv_text,
         frequency=req.frequency,
         day_of_week=req.day_of_week,
+        user_id=user.id,
     )
 
     freq_str = "daily" if req.frequency == "daily" else f"weekly on {req.day_of_week}"

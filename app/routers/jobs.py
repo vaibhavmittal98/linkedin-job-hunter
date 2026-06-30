@@ -16,16 +16,16 @@ router = APIRouter(prefix="/api")
 
 
 @router.get("/jobs", response_model=list[JobOut])
-def list_jobs(min_score: float = 0, db: Session = Depends(get_db)):
-    query = db.query(Job)
+def list_jobs(min_score: float = 0, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
+    query = db.query(Job).filter(Job.user_id == user.id)
     if min_score > 0:
         query = query.filter(Job.relevance_score >= min_score)
     return query.order_by(Job.relevance_score.desc()).all()
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut)
-def get_job(job_id: int, db: Session = Depends(get_db)):
-    job = db.query(Job).get(job_id)
+def get_job(job_id: int, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
+    job = db.query(Job).filter(Job.id == job_id, Job.user_id == user.id).first()
     if not job:
         raise HTTPException(404, "Job not found")
     return job
@@ -34,11 +34,11 @@ def get_job(job_id: int, db: Session = Depends(get_db)):
 @router.post("/scrape")
 def trigger_scrape(req: ScrapeRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
     """Scrape jobs in background."""
-    background_tasks.add_task(_run_scrape, req.keywords, req.locations, req.max_results, req.scrape_all, req.published_at, user.cv_text, "manual")
+    background_tasks.add_task(_run_scrape, req.keywords, req.locations, req.max_results, req.scrape_all, req.published_at, user.cv_text, "manual", user.id)
     return {"status": "started", "message": "Scraping started. Jobs will appear on the dashboard soon."}
 
 
-def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, schedule_job_id: str = "manual"):
+def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, schedule_job_id: str = "manual", user_id: int = None):
     """Background scrape task."""
     from app.db import SessionLocal
     from app.models import ScrapeRun
@@ -49,7 +49,7 @@ def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scr
         raw_jobs = scrape_linkedin_jobs(keywords, locations, max_results, scrape_all, published_at)
         added = 0
         for raw in raw_jobs:
-            existing = db.query(Job).filter(Job.linkedin_id == raw.get("linkedin_id")).first()
+            existing = db.query(Job).filter(Job.linkedin_id == raw.get("linkedin_id"), Job.user_id == user_id).first()
             if existing:
                 continue
 
@@ -62,6 +62,7 @@ def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scr
                     score = None
 
             job = Job(
+                user_id=user_id,
                 linkedin_id=raw.get("linkedin_id"),
                 title=raw["title"],
                 company=raw["company"],

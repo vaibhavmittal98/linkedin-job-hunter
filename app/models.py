@@ -10,7 +10,8 @@ class Job(Base):
     __tablename__ = "jobs"
 
     id = Column(Integer, primary_key=True)
-    linkedin_id = Column(String, unique=True)
+    user_id = Column(Integer, ForeignKey("user_profile.id"))
+    linkedin_id = Column(String)
     title = Column(String, nullable=False)
     company = Column(String, nullable=False)
     company_logo = Column(String)
@@ -73,6 +74,7 @@ class ScheduledScrape(Base):
 
     id = Column(Integer, primary_key=True)
     job_id = Column(String, unique=True, nullable=False)
+    user_id = Column(Integer)
     username = Column(String, nullable=False)
     keywords = Column(Text, nullable=False)  # JSON array
     locations = Column(Text, default="[]")  # JSON array
