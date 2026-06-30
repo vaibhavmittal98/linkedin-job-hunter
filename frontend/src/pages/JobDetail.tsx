@@ -47,7 +47,18 @@ export default function JobDetail() {
           <div><strong>Function:</strong> {job.job_function || "N/A"}</div>
           <div><strong>Industry:</strong> {job.industries || "N/A"}</div>
           <div><strong>Applicants:</strong> {job.applicants_count || "N/A"}</div>
-          <div><strong>Posted:</strong> {job.posted_at || "N/A"}</div>
+          <div><strong>Posted:</strong> {(() => {
+            if (!job.posted_at) return "N/A";
+            const d = new Date(job.posted_at);
+            if (isNaN(d.getTime())) return job.posted_at;
+            const now = new Date();
+            const diff = Math.floor((now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+            if (diff === 0) return "Today";
+            if (diff === 1) return "Yesterday";
+            if (diff < 7) return `${diff} days ago`;
+            if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+            return d.toLocaleDateString();
+          })()}</div>
           <div><strong>Salary:</strong> {job.salary || "Not listed"}</div>
         </div>
         {job.relevance_score !== null && (
