@@ -5,6 +5,15 @@ function authHeaders(): HeadersInit {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+async function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const res = await fetch(url, { ...options, headers: { ...authHeaders(), ...options.headers } });
+  if (res.status === 401) {
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  }
+  return res;
+}
+
 export interface Job {
   id: number;
   linkedin_id: string | null;
@@ -48,53 +57,53 @@ export interface UserProfile {
 }
 
 export async function fetchJobs(minScore = 0): Promise<Job[]> {
-  const res = await fetch(`${API_BASE}/jobs?min_score=${minScore}`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/jobs?min_score=${minScore}`);
   return res.json();
 }
 
 export async function fetchJob(id: number): Promise<Job> {
-  const res = await fetch(`${API_BASE}/jobs/${id}`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/jobs/${id}`);
   return res.json();
 }
 
 export async function triggerScrape(linkedinUrl: string, maxResults = 10, scrapeAll = false, splitByLocation = false, splitCountry = "") {
-  const res = await fetch(`${API_BASE}/scrape`, {
+  const res = await authFetch(`${API_BASE}/scrape`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ linkedin_url: linkedinUrl, max_results: maxResults, scrape_all: scrapeAll, split_by_location: splitByLocation, split_country: splitCountry }),
   });
   return res.json();
 }
 
 export async function generateCoverLetter(jobId: number): Promise<CoverLetter> {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/cover-letter`, { method: "POST", headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/cover-letter`, { method: "POST" });
   return res.json();
 }
 
 export async function getCoverLetter(jobId: number): Promise<CoverLetter | null> {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/cover-letter`, { headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/cover-letter`);
   if (res.status === 404) return null;
   return res.json();
 }
 
 export async function refineCoverLetter(jobId: number, message: string): Promise<{ content: string }> {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/cover-letter/refine`, {
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/cover-letter/refine`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeaders() },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ message }),
   });
   return res.json();
 }
 
 export async function scoreJob(jobId: number): Promise<{ score: number; reason: string }> {
-  const res = await fetch(`${API_BASE}/jobs/${jobId}/score`, { method: "POST", headers: authHeaders() });
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/score`, { method: "POST" });
   return res.json();
 }
 
 export async function markApplied(jobId: number): Promise<void> {
-  await fetch(`${API_BASE}/jobs/${jobId}/apply`, { method: "POST", headers: authHeaders() });
+  await authFetch(`${API_BASE}/jobs/${jobId}/apply`, { method: "POST" });
 }
 
 export async function markUnapplied(jobId: number): Promise<void> {
-  await fetch(`${API_BASE}/jobs/${jobId}/unapply`, { method: "POST", headers: authHeaders() });
+  await authFetch(`${API_BASE}/jobs/${jobId}/unapply`, { method: "POST" });
 }
