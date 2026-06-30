@@ -1,29 +1,25 @@
 import httpx
+import time
 from app.config import settings
 
-ACTOR_ID = "curious_coder~linkedin-jobs-scraper"
+ACTOR_ID = "cheap_scraper~linkedin-job-scraper"
 BASE_URL = f"https://api.apify.com/v2/actors/{ACTOR_ID}"
 
 
 def scrape_linkedin_jobs(linkedin_url: str, max_results: int = 10, scrape_all: bool = False, split_by_location: bool = False, split_country: str = "", last_24h: bool = False) -> list[dict]:
-    """Scrape LinkedIn jobs using curious_coder/linkedin-jobs-scraper on Apify."""
+    """Scrape LinkedIn jobs using cheap_scraper/linkedin-job-scraper on Apify."""
     if not settings.apify_api_token or settings.apify_api_token == "your_apify_token_here":
         return _demo_data("", "", max_results)
 
     token = settings.apify_api_token
-    url = linkedin_url
-    if last_24h and "f_TPR" not in url:
-        url += "&f_TPR=r86400" if "?" in url else "?f_TPR=r86400"
 
     run_input = {
-        "urls": [url],
-        "scrapeCompany": True,
+        "startUrls": [{"url": linkedin_url}],
+        "saveOnlyUniqueItems": True,
+        "enrichCompanyData": False,
     }
     if not scrape_all:
-        run_input["count"] = max(max_results, 10)
-    if split_by_location and split_country:
-        run_input["splitByLocation"] = True
-        run_input["splitCountry"] = split_country
+        run_input["maxItems"] = max(max_results, 150)
 
     # Start the actor run
     start_resp = httpx.post(
@@ -36,8 +32,7 @@ def scrape_linkedin_jobs(linkedin_url: str, max_results: int = 10, scrape_all: b
     run_data = start_resp.json()["data"]
     run_id = run_data["id"]
 
-    # Poll until finished (no timeout — let it run)
-    import time
+    # Poll until finished (no timeout)
     while True:
         time.sleep(10)
         status_resp = httpx.get(
@@ -58,7 +53,7 @@ def scrape_linkedin_jobs(linkedin_url: str, max_results: int = 10, scrape_all: b
     items_resp = httpx.get(
         f"https://api.apify.com/v2/datasets/{dataset_id}/items",
         params={"token": token},
-        timeout=30,
+        timeout=60,
     )
     items_resp.raise_for_status()
     items = items_resp.json()
@@ -66,30 +61,30 @@ def scrape_linkedin_jobs(linkedin_url: str, max_results: int = 10, scrape_all: b
     results = []
     for item in items:
         results.append({
-            "linkedin_id": item.get("id", ""),
-            "title": item.get("title", ""),
+            "linkedin_id": item.get("jobId", ""),
+            "title": item.get("jobTitle", ""),
             "company": item.get("companyName", ""),
             "company_logo": item.get("companyLogo", ""),
-            "company_url": item.get("companyLinkedinUrl", ""),
-            "company_website": item.get("companyWebsite", ""),
-            "company_description": item.get("companyDescription", ""),
-            "company_address": str(item.get("companyAddress", "")),
-            "company_employees_count": item.get("companyEmployeesCount"),
+            "company_url": item.get("companyUrl", ""),
+            "company_website": "",
+            "company_description": "",
+            "company_address": "",
+            "company_employees_count": None,
             "location": item.get("location", ""),
-            "url": item.get("link", ""),
+            "url": item.get("jobUrl", ""),
             "apply_url": item.get("applyUrl", ""),
-            "description": item.get("descriptionText", ""),
-            "description_html": item.get("descriptionHtml", ""),
-            "salary": item.get("salary", ""),
-            "posted_at": item.get("postedAt", ""),
-            "seniority_level": item.get("seniorityLevel", ""),
-            "employment_type": item.get("employmentType", ""),
-            "job_function": item.get("jobFunction", ""),
-            "industries": item.get("industries", ""),
-            "applicants_count": item.get("applicantsCount", ""),
-            "benefits": str(item.get("benefits", [])),
-            "job_poster_name": item.get("jobPosterName", ""),
-            "job_poster_profile_url": item.get("jobPosterProfileUrl", ""),
+            "description": item.get("jobDescription", ""),
+            "description_html": "",
+            "salary": ", ".join(item.get("salaryInfo", [])) if item.get("salaryInfo") else "",
+            "posted_at": item.get("publishedAt", ""),
+            "seniority_level": item.get("experienceLevel", ""),
+            "employment_type": item.get("contractType", ""),
+            "job_function": item.get("workType", ""),
+            "industries": item.get("sector", ""),
+            "applicants_count": item.get("applicationsCount", ""),
+            "benefits": "",
+            "job_poster_name": item.get("posterFullName", ""),
+            "job_poster_profile_url": item.get("posterProfileUrl", ""),
         })
 
     return results
@@ -108,40 +103,30 @@ def _demo_data(keywords: str, location: str, max_results: int) -> list[dict]:
     """Generate sample job data for demo/testing."""
     samples = [
         {
-            "title": f"Senior {keywords}",
+            "linkedin_id": "demo1",
+            "title": "Senior Software Engineer",
             "company": "TechCorp",
+            "company_logo": "",
+            "company_url": "",
+            "company_website": "",
+            "company_description": "",
+            "company_address": "",
+            "company_employees_count": None,
             "location": location or "Remote",
             "url": "https://linkedin.com/jobs/1",
-            "description": f"We are looking for a Senior {keywords} to join our team. Requirements: 5+ years experience, strong problem-solving skills, experience with modern frameworks and cloud infrastructure. You will lead projects, mentor juniors, and collaborate across teams.",
-            "salary": "€70,000 - €90,000",
-            "posted_at": "2 days ago",
-        },
-        {
-            "title": f"{keywords} - Mid Level",
-            "company": "StartupXYZ",
-            "location": location or "Amsterdam",
-            "url": "https://linkedin.com/jobs/2",
-            "description": f"Join our fast-growing startup as a {keywords}. You'll work on greenfield projects with a small, talented team. Requirements: 3+ years experience, passion for clean code, CI/CD knowledge.",
-            "salary": "€55,000 - €70,000",
-            "posted_at": "1 week ago",
-        },
-        {
-            "title": f"Lead {keywords}",
-            "company": "BigBank Inc",
-            "location": location or "London",
-            "url": "https://linkedin.com/jobs/3",
-            "description": f"Lead {keywords} position at a major financial institution. Manage a team of 8, drive architecture decisions, ensure compliance with security standards. 7+ years required.",
-            "salary": "€95,000 - €120,000",
-            "posted_at": "3 days ago",
-        },
-        {
-            "title": f"Junior {keywords}",
-            "company": "LearnTech",
-            "location": location or "Berlin",
-            "url": "https://linkedin.com/jobs/4",
-            "description": f"Great opportunity for a Junior {keywords} to grow. Mentorship provided, modern stack, flexible hours. 0-2 years experience.",
-            "salary": "€35,000 - €45,000",
-            "posted_at": "5 days ago",
+            "apply_url": "",
+            "description": "We are looking for a Senior Software Engineer to join our team.",
+            "description_html": "",
+            "salary": "",
+            "posted_at": "2026-06-28",
+            "seniority_level": "Mid-Senior level",
+            "employment_type": "Full-time",
+            "job_function": "Engineering",
+            "industries": "Technology",
+            "applicants_count": "50",
+            "benefits": "",
+            "job_poster_name": "",
+            "job_poster_profile_url": "",
         },
     ]
     return samples[:max_results]
