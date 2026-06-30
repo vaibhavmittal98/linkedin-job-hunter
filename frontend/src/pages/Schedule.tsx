@@ -2,10 +2,14 @@ import { useEffect, useState } from "react";
 
 interface Schedule {
   id: string;
-  linkedin_url: string;
+  keywords: string[];
+  locations: string[];
   hour: number;
   minute: number;
   scrape_all: boolean;
+  published_at: string;
+  frequency: string;
+  day_of_week: string;
 }
 
 interface RunHistory {
@@ -23,13 +27,15 @@ function authHeaders(): HeadersInit {
 
 export default function SchedulePage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [maxResults, setMaxResults] = useState(10);
+  const [keywords, setKeywords] = useState("");
+  const [locations, setLocations] = useState("");
+  const [maxResults, setMaxResults] = useState(150);
   const [scrapeAll, setScrapeAll] = useState(false);
+  const [publishedAt, setPublishedAt] = useState("r86400");
+  const [frequency, setFrequency] = useState("daily");
+  const [dayOfWeek, setDayOfWeek] = useState("mon");
   const [hour, setHour] = useState("2");
   const [minute, setMinute] = useState("0");
-  const [hourTouched, setHourTouched] = useState(false);
-  const [minuteTouched, setMinuteTouched] = useState(false);
   const [message, setMessage] = useState("");
   const [history, setHistory] = useState<RunHistory[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
@@ -43,10 +49,12 @@ export default function SchedulePage() {
   useEffect(() => { loadSchedules(); }, []);
 
   const handleCreate = async () => {
+    const kws = keywords.split(",").map(k => k.trim()).filter(Boolean);
+    const locs = locations.split(",").map(l => l.trim()).filter(Boolean);
     const res = await fetch("/api/schedules", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ linkedin_url: linkedinUrl, max_results: maxResults, scrape_all: scrapeAll, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+      body: JSON.stringify({ keywords: kws, locations: locs, max_results: maxResults, scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -79,24 +87,42 @@ export default function SchedulePage() {
 
       <div className="card">
         <h2>Create Schedule</h2>
-        <label>LinkedIn Search URL</label>
-        <p style={{ fontSize: "0.8rem", color: "#666", marginBottom: "0.5rem" }}>
-          Paste your LinkedIn jobs search URL from an incognito window. Include &f_TPR=r86400 in the URL if you only want jobs from the last 24 hours.
-        </p>
-        <input value={linkedinUrl} onChange={(e) => setLinkedinUrl(e.target.value)} placeholder="https://www.linkedin.com/jobs/search?keywords=..." />
-        <label>Max results (min 10)</label>
-        <input type="number" min={10} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 10)} disabled={scrapeAll} />
+        <label>Keywords (comma-separated)</label>
+        <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Software Engineer, Backend Developer" />
+        <label>Locations (comma-separated)</label>
+        <input value={locations} onChange={(e) => setLocations(e.target.value)} placeholder="Stockholm, Netherlands" />
+        <label>Max results (min 150)</label>
+        <input type="number" min={150} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 150)} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Scrape all available
         </label>
+        <label>Frequency</label>
+        <select value={frequency} onChange={(e) => { setFrequency(e.target.value); setPublishedAt(e.target.value === "weekly" ? "r604800" : "r86400"); }} style={{ marginBottom: "0.75rem" }}>
+          <option value="daily">Daily (scrapes last 24h)</option>
+          <option value="weekly">Weekly (scrapes last week)</option>
+        </select>
+        {frequency === "weekly" && (
+          <>
+            <label>Day of week</label>
+            <select value={dayOfWeek} onChange={(e) => setDayOfWeek(e.target.value)} style={{ marginBottom: "0.75rem" }}>
+              <option value="mon">Monday</option>
+              <option value="tue">Tuesday</option>
+              <option value="wed">Wednesday</option>
+              <option value="thu">Thursday</option>
+              <option value="fri">Friday</option>
+              <option value="sat">Saturday</option>
+              <option value="sun">Sunday</option>
+            </select>
+          </>
+        )}
         <label>Run at (24h, CET timezone)</label>
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem" }}>
-          <input type="text" maxLength={2} value={hour} onChange={(e) => setHour(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="6" style={{ width: "60px", textAlign: "center" }} />
+          <input type="text" maxLength={2} value={hour} onChange={(e) => setHour(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="2" style={{ width: "60px", textAlign: "center" }} />
           <span style={{ alignSelf: "center" }}>:</span>
           <input type="text" maxLength={2} value={minute} onChange={(e) => setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="0" style={{ width: "60px", textAlign: "center" }} />
         </div>
-        <button className="btn" onClick={handleCreate} disabled={!linkedinUrl}>Create Schedule</button>
+        <button className="btn" onClick={handleCreate} disabled={!keywords}>Create Schedule</button>
         {message && <p style={{ marginTop: "0.5rem", color: "green" }}>{message}</p>}
       </div>
 
@@ -107,9 +133,9 @@ export default function SchedulePage() {
           <div key={s.id}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
               <div style={{ cursor: "pointer" }} onClick={() => handleShowHistory(s.id)}>
-                <strong style={{ wordBreak: "break-all", fontSize: "0.85rem" }}>{s.linkedin_url}</strong>
+                <strong>{s.keywords.join(", ")}</strong> — {s.locations.join(", ") || "Any location"}
                 <p style={{ fontSize: "0.8rem", color: "#666" }}>
-                  Runs daily at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"}
+                  Runs {s.frequency === "weekly" ? `weekly on ${s.day_of_week}` : "daily"} at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"} | {s.published_at === "r86400" ? "Last 24h" : s.published_at === "r604800" ? "Last week" : s.published_at === "r2592000" ? "Last month" : "Any time"}
                 </p>
               </div>
               <button className="btn btn-outline" onClick={() => handleDelete(s.id)} style={{ fontSize: "0.8rem" }}>Delete</button>

@@ -6,20 +6,23 @@ ACTOR_ID = "cheap_scraper~linkedin-job-scraper"
 BASE_URL = f"https://api.apify.com/v2/actors/{ACTOR_ID}"
 
 
-def scrape_linkedin_jobs(linkedin_url: str, max_results: int = 10, scrape_all: bool = False, split_by_location: bool = False, split_country: str = "", last_24h: bool = False) -> list[dict]:
+def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
     """Scrape LinkedIn jobs using cheap_scraper/linkedin-job-scraper on Apify."""
     if not settings.apify_api_token or settings.apify_api_token == "your_apify_token_here":
-        return _demo_data("", "", max_results)
+        return _demo_data(keywords, locations, max_results)
 
     token = settings.apify_api_token
 
     run_input = {
-        "startUrls": [{"url": linkedin_url}],
+        "keyword": keywords,
+        "locations": locations,
         "saveOnlyUniqueItems": True,
         "enrichCompanyData": False,
     }
     if not scrape_all:
         run_input["maxItems"] = max(max_results, 150)
+    if published_at:
+        run_input["publishedAt"] = published_at
 
     # Start the actor run
     start_resp = httpx.post(
@@ -99,12 +102,14 @@ def abort_run(run_id: str):
     )
 
 
-def _demo_data(keywords: str, location: str, max_results: int) -> list[dict]:
+def _demo_data(keywords: list[str], locations: list[str], max_results: int) -> list[dict]:
     """Generate sample job data for demo/testing."""
+    kw = keywords[0] if keywords else "Software Engineer"
+    loc = locations[0] if locations else "Remote"
     samples = [
         {
             "linkedin_id": "demo1",
-            "title": "Senior Software Engineer",
+            "title": f"Senior {kw}",
             "company": "TechCorp",
             "company_logo": "",
             "company_url": "",
@@ -112,10 +117,10 @@ def _demo_data(keywords: str, location: str, max_results: int) -> list[dict]:
             "company_description": "",
             "company_address": "",
             "company_employees_count": None,
-            "location": location or "Remote",
+            "location": loc,
             "url": "https://linkedin.com/jobs/1",
             "apply_url": "",
-            "description": "We are looking for a Senior Software Engineer to join our team.",
+            "description": f"We are looking for a Senior {kw} to join our team.",
             "description_html": "",
             "salary": "",
             "posted_at": "2026-06-28",

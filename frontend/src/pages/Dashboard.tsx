@@ -107,7 +107,7 @@ export default function Dashboard() {
         {[...filtered]
           .sort((a, b) => (b.relevance_score ?? -1) - (a.relevance_score ?? -1))
           .map((job) => (
-          <Link to={`/jobs/${job.id}`} key={job.id} className="job-card-link">
+          <Link to={`/jobs/${job.id}`} key={job.id} className="job-card-link" target="_blank" rel="noopener noreferrer">
             <div className="job-card">
               <div className="job-card-header">
                 {job.company_logo && (
@@ -130,7 +130,7 @@ export default function Dashboard() {
                   if (diff === 0) return "Today";
                   if (diff === 1) return "Yesterday";
                   if (diff < 7) return `${diff} days ago`;
-                  if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+                  if (diff < 30) { const w = Math.floor(diff / 7); return `${w} ${w === 1 ? "week" : "weeks"} ago`; }
                   return d.toLocaleDateString();
                 })()}</span>}
                 {job.applicants_count && <span>👥 {job.applicants_count} applicants</span>}

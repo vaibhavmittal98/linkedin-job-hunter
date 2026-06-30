@@ -74,13 +74,15 @@ class ScheduledScrape(Base):
     id = Column(Integer, primary_key=True)
     job_id = Column(String, unique=True, nullable=False)
     username = Column(String, nullable=False)
-    linkedin_url = Column(String, nullable=False)
-    max_results = Column(Integer, default=10)
+    keywords = Column(Text, nullable=False)  # JSON array
+    locations = Column(Text, default="[]")  # JSON array
+    max_results = Column(Integer, default=150)
     scrape_all = Column(Boolean, default=False)
-    split_by_location = Column(Boolean, default=False)
-    split_country = Column(String, default="")
+    published_at = Column(String, default="")
     hour = Column(Integer, default=2)
     minute = Column(Integer, default=0)
+    frequency = Column(String, default="daily")  # "daily" or "weekly"
+    day_of_week = Column(String, default="mon")  # mon, tue, wed, thu, fri, sat, sun
     cv_text = Column(Text)
 
 

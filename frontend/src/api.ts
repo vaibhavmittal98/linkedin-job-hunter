@@ -66,11 +66,11 @@ export async function fetchJob(id: number): Promise<Job> {
   return res.json();
 }
 
-export async function triggerScrape(linkedinUrl: string, maxResults = 10, scrapeAll = false, splitByLocation = false, splitCountry = "") {
+export async function triggerScrape(keywords: string[], locations: string[], maxResults = 150, scrapeAll = false, publishedAt = "") {
   const res = await authFetch(`${API_BASE}/scrape`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ linkedin_url: linkedinUrl, max_results: maxResults, scrape_all: scrapeAll, split_by_location: splitByLocation, split_country: splitCountry }),
+    body: JSON.stringify({ keywords, locations, max_results: maxResults, scrape_all: scrapeAll, published_at: publishedAt }),
   });
   return res.json();
 }
@@ -106,4 +106,8 @@ export async function markApplied(jobId: number): Promise<void> {
 
 export async function markUnapplied(jobId: number): Promise<void> {
   await authFetch(`${API_BASE}/jobs/${jobId}/unapply`, { method: "POST" });
+}
+
+export async function deleteJob(jobId: number): Promise<void> {
+  await authFetch(`${API_BASE}/jobs/${jobId}`, { method: "DELETE" });
 }

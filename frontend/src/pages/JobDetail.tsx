@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, Job, CoverLetter } from "../api";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, deleteJob, Job, CoverLetter } from "../api";
 
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [job, setJob] = useState<Job | null>(null);
   const [letter, setLetter] = useState<CoverLetter | null>(null);
   const [loading, setLoading] = useState(false);
@@ -56,7 +57,7 @@ export default function JobDetail() {
             if (diff === 0) return "Today";
             if (diff === 1) return "Yesterday";
             if (diff < 7) return `${diff} days ago`;
-            if (diff < 30) return `${Math.floor(diff / 7)} weeks ago`;
+            if (diff < 30) { const w = Math.floor(diff / 7); return `${w} ${w === 1 ? "week" : "weeks"} ago`; }
             return d.toLocaleDateString();
           })()}</div>
           <div><strong>Salary:</strong> {job.salary || "Not listed"}</div>
@@ -99,6 +100,18 @@ export default function JobDetail() {
           }}
         >
           {job.applied ? "✓ Applied" : "Mark as Applied"}
+        </button>
+        <button
+          className="btn"
+          style={{ background: "#dc2626" }}
+          onClick={async () => {
+            if (confirm("Delete this job?")) {
+              await deleteJob(job.id);
+              navigate("/");
+            }
+          }}
+        >
+          Delete
         </button>
       </div>
 
