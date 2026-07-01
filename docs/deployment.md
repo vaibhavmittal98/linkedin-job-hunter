@@ -1,5 +1,7 @@
 # Deployment Guide (AWS EC2)
 
+> **Note:** The `.kiro/` directory (agent skills) is intentionally **not** pushed to the repo — it is local-only and gitignored. It will not be present on the server after a `git pull`, and a fresh checkout won't include it.
+
 ## Infrastructure
 
 | Resource | Details |
@@ -8,7 +10,7 @@
 | OS | Ubuntu 24.04 LTS |
 | Region | eu-north-1 (Stockholm) |
 | Storage | 20GB gp3 EBS |
-| Public IP | 51.20.189.179 |
+| Public IP | (hidden — access via vaibing.org) |
 | Key pair | `linkedin-job-hunter` (stored at `~/.ssh/linkedin-job-hunter.pem`) |
 | Security group | `linkedin-job-hunter-sg` — ports 22, 80, 443 open |
 
@@ -38,7 +40,7 @@ aws ec2 run-instances \
 ### 2. SSH In
 
 ```bash
-ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@51.20.189.179
+ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@<ec2-ip>
 ```
 
 ### 3. Install Dependencies
@@ -61,7 +63,7 @@ chmod +x setup.sh run.sh
 
 ```bash
 # Copy .env from local machine:
-scp -i ~/.ssh/linkedin-job-hunter.pem /path/to/.env ubuntu@51.20.189.179:~/app/.env
+scp -i ~/.ssh/linkedin-job-hunter.pem /path/to/.env ubuntu@<ec2-ip>:~/app/.env
 
 # Or edit directly:
 nano ~/app/.env
@@ -79,9 +81,24 @@ npm run build
 File: `/etc/nginx/sites-available/linkedin-job-hunter`
 
 ```nginx
+# Block direct IP access
+server {
+    listen 80 default_server;
+    listen 443 ssl default_server;
+    ssl_certificate /etc/ssl/certs/vaibing.crt;
+    ssl_certificate_key /etc/ssl/private/vaibing.key;
+    server_name _;
+    return 444;
+}
+
+# Serve app only via domain (Cloudflare)
 server {
     listen 80;
-    server_name _;
+    listen 443 ssl;
+    server_name vaibing.org www.vaibing.org;
+
+    ssl_certificate /etc/ssl/certs/vaibing.crt;
+    ssl_certificate_key /etc/ssl/private/vaibing.key;
 
     root /home/ubuntu/app/frontend/dist;
     index index.html;
@@ -147,13 +164,13 @@ sudo systemctl start linkedin-job-hunter
 
 ### Backend changes only:
 ```bash
-ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@51.20.189.179 \
+ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@<ec2-ip> \
   "cd ~/app && git pull && sudo systemctl restart linkedin-job-hunter"
 ```
 
 ### Frontend + backend changes:
 ```bash
-ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@51.20.189.179 \
+ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@<ec2-ip> \
   "cd ~/app && git pull && cd frontend && npm run build && cd .. && sudo systemctl restart linkedin-job-hunter"
 ```
 
@@ -161,7 +178,7 @@ ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@51.20.189.179 \
 
 ```bash
 # SSH into server
-ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@51.20.189.179
+ssh -i ~/.ssh/linkedin-job-hunter.pem ubuntu@<ec2-ip>
 
 # Check service status
 sudo systemctl status linkedin-job-hunter
@@ -179,16 +196,32 @@ sudo systemctl restart nginx
 sudo tail -f /var/log/nginx/error.log
 ```
 
-## Adding HTTPS (requires domain)
+## HTTPS (Cloudflare)
 
-Once you have a domain pointing to 51.20.189.179:
+Domain: `vaibing.org` (Cloudflare Registrar)
 
-```bash
-sudo apt install certbot python3-certbot-nginx
-sudo certbot --nginx -d yourdomain.com
+### DNS Setup (already done)
+- A record: `@` → `<ec2-ip>` (Proxied)
+
+### How it works
+```
+User → HTTPS → Cloudflare (valid SSL) → HTTPS → EC2 (self-signed cert) → Nginx → App
 ```
 
-Certbot auto-configures Nginx for SSL and sets up auto-renewal.
+- Cloudflare handles the public SSL certificate for visitors
+- Server has a self-signed cert (10-year validity) for Cloudflare-to-origin connection
+- Cloudflare SSL mode: Full (default)
+
+### Self-signed cert (already on server)
+```bash
+sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
+  -keyout /etc/ssl/private/vaibing.key \
+  -out /etc/ssl/certs/vaibing.crt \
+  -subj "/CN=vaibing.org"
+```
+
+### Nginx listens on both 80 and 443
+No Certbot needed — Cloudflare handles public SSL.
 
 ## Cost
 
