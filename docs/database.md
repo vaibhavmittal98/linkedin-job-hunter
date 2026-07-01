@@ -9,7 +9,8 @@ SQLite database stored at `./jobs.db`. Auto-created on first server start.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-increment |
-| `linkedin_id` | VARCHAR (unique) | LinkedIn job ID, used for deduplication |
+| `user_id` | INTEGER FK | Owner (references `user_profile.id`) |
+| `linkedin_id` | VARCHAR | LinkedIn job ID, used for deduplication |
 | `title` | VARCHAR | Job title |
 | `company` | VARCHAR | Company name |
 | `company_logo` | VARCHAR | Logo URL |
@@ -63,15 +64,17 @@ SQLite database stored at `./jobs.db`. Auto-created on first server start.
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-increment |
 | `job_id` | VARCHAR (unique) | Schedule identifier |
-| `username` | VARCHAR | Owner |
-| `keywords` | VARCHAR | Search keywords |
-| `location` | VARCHAR | Search location |
-| `max_results` | INTEGER | Job count limit |
+| `user_id` | INTEGER | Owner user id |
+| `username` | VARCHAR | Owner username |
+| `keywords` | TEXT | JSON array of search keywords |
+| `locations` | TEXT | JSON array of locations (default `"[]"`) |
+| `max_results` | INTEGER | Job count limit (default 150) |
 | `scrape_all` | BOOLEAN | Ignore count limit |
-| `split_by_location` | BOOLEAN | Split by cities |
-| `split_country` | VARCHAR | Country code for split |
+| `published_at` | VARCHAR | Time window: `""`, `r86400` (24h), `r604800` (week), `r2592000` (month) |
 | `hour` | INTEGER | Run hour (CET) |
 | `minute` | INTEGER | Run minute |
+| `frequency` | VARCHAR | `"daily"` or `"weekly"` |
+| `day_of_week` | VARCHAR | `mon`-`sun` (used when weekly) |
 | `cv_text` | TEXT | CV snapshot for scoring |
 
 ### `scrape_runs`

@@ -59,14 +59,16 @@ Start a background scrape.
 **Body:**
 ```json
 {
-  "keywords": "Software Engineer",
-  "location": "Netherlands",
+  "keywords": ["Software Engineer"],
+  "locations": ["Netherlands"],
   "max_results": 10,
   "scrape_all": false,
-  "split_by_location": false,
-  "split_country": ""
+  "published_at": ""
 }
 ```
+
+`keywords` and `locations` are arrays. `published_at` sets the time window:
+`""` (any), `"r86400"` (last 24h), `"r604800"` (last week), `"r2592000"` (last month).
 
 **Response:** `{"status": "started", "message": "Scraping started. Jobs will appear on the dashboard soon."}`
 
@@ -95,19 +97,24 @@ Download cover letter as PDF.
 ## Schedules
 
 ### `POST /api/schedules`
-Create a daily scrape schedule.
+Create a daily or weekly scrape schedule.
 
 **Body:**
 ```json
 {
-  "keywords": "Backend Engineer",
-  "location": "Stockholm",
+  "keywords": ["Backend Engineer"],
+  "locations": ["Stockholm"],
   "max_results": 10,
   "scrape_all": false,
+  "published_at": "",
   "hour": 2,
-  "minute": 0
+  "minute": 0,
+  "frequency": "daily",
+  "day_of_week": "mon"
 }
 ```
+
+`frequency` is `"daily"` or `"weekly"`. `day_of_week` (`mon`-`sun`) applies only when weekly.
 
 ### `GET /api/schedules`
 List user's schedules.

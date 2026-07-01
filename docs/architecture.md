@@ -51,7 +51,7 @@
 - **Deduplication** — jobs are deduped by `linkedin_id` (unique constraint)
 - **Background-first** — scraping never blocks the UI; results appear asynchronously
 - **Persistent schedules** — stored in DB, reloaded on server restart
-- **Cost-aware** — only scrapes last 24h jobs (`f_TPR=r86400`), scoring is per-job on demand or during scrape
+- **Cost-aware** — scrape time window is configurable per request/schedule via `published_at` (any / last 24h `r86400` / week `r604800` / month `r2592000`); scoring is per-job on demand or during scrape
 
 ## Extension Points
 
