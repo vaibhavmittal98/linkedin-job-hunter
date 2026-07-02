@@ -35,14 +35,16 @@ export default function CoverLetter() {
   const handleRefine = async () => {
     if (!refineMsg.trim() || letter === null) return;
     setRefining(true);
+    setError("");
     try {
       const result = await refineAdhocCoverLetter(letter, refineMsg, title, company);
       if (typeof result.content === "string") setLetter(result.content);
       setRefineMsg("");
     } catch {
       setError("Something went wrong refining the cover letter.");
+    } finally {
+      setRefining(false);
     }
-    setRefining(false);
   };
 
   return (
