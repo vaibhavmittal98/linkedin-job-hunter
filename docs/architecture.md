@@ -5,7 +5,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        React Frontend                                │
-│  (Dashboard, JobDetail, Scrape, Schedule, Profile, Login, Signup)    │
+│  (Dashboard, JobDetail, Scrape, CoverLetter, Schedule, Profile, Login, Signup) │
 │  http://localhost:5173                                               │
 └────────────────────────┬────────────────────────────────────────────┘
                          │ HTTP (proxied via Vite, JWT auth)
@@ -17,10 +17,12 @@
 │  Routers              │  Services                │  Data Layer        │
 │  ──────────           │  ────────                │  ──────────        │
 │  /api/jobs            │  scraper.py (Apify)      │  SQLAlchemy ORM    │
-│  /api/scrape          │  scorer.py (OpenRouter)  │  SQLite (jobs.db)  │
-│  /api/auth            │  cover_letter.py         │                    │
-│  /api/schedules       │  pdf_generator.py        │                    │
-│                       │  scheduler.py (APSched)  │                    │
+│  (paginated+filtered) │  scorer.py (OpenRouter)  │  SQLite (jobs.db)  │
+│  /api/scrape          │  cover_letter.py         │                    │
+│  /api/cover-letter    │  pdf_generator.py        │                    │
+│    /adhoc             │  scheduler.py (APSched)  │                    │
+│  /api/auth            │                          │                    │
+│  /api/schedules       │                          │                    │
 └─────────────────────────────────────────────────────────────────────┘
                          │                │
                          ▼                ▼
@@ -48,7 +50,7 @@
 ## Design Principles
 
 - **CV-centric** — all scoring and cover letters use the user's uploaded CV directly (no manual profile fields)
-- **Deduplication** — jobs are deduped by `linkedin_id` (unique constraint)
+- **Deduplication** — jobs are deduped by `linkedin_id` per user (in `_run_scrape`, not a DB-level unique constraint)
 - **Background-first** — scraping never blocks the UI; results appear asynchronously
 - **Persistent schedules** — stored in DB, reloaded on server restart
 - **Cost-aware** — scrape time window is configurable per request/schedule via `published_at` (any / last 24h `r86400` / week `r604800` / month `r2592000`); scoring is per-job on demand or during scrape

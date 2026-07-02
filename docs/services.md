@@ -4,21 +4,23 @@
 
 **Purpose:** Fetch LinkedIn jobs via Apify.
 
-**Actor:** `curious_coder/linkedin-jobs-scraper`
+**Actor:** `cheap_scraper~linkedin-job-scraper`
 
 **Flow:**
 1. Start actor run via `POST /actors/{id}/runs`
-2. Poll `GET /actor-runs/{runId}` every 5s until SUCCEEDED/FAILED
-3. Abort after 5 min if still running (saves credits)
-4. Fetch dataset items from `GET /datasets/{id}/items`
+2. Poll `GET /actor-runs/{runId}` every 10s until SUCCEEDED (FAILED/ABORTED/TIMED-OUT → return [])
+3. Fetch dataset items from `GET /datasets/{id}/items`
+4. If no valid `APIFY_API_TOKEN` is set, returns demo data instead of calling Apify.
 
-**Key params:**
-- `urls` — LinkedIn search URL (includes `f_TPR=r86400` for last 24h)
-- `count` — limit results (min 10)
-- `scrapeCompany: true` — full company details
-- `splitByLocation` / `splitCountry` — bypass 1000 job limit
+**Key run_input params:**
+- `keyword` — array of search keywords
+- `locations` — array of locations
+- `saveOnlyUniqueItems: true` — dedupe within the run
+- `enrichCompanyData: false` — skip extra company page requests
+- `maxItems` — set to `max(max_results, 150)` unless `scrape_all` is true
+- `publishedAt` — time window (`r86400` 24h, `r604800` week, `r2592000` month)
 
-**Deduplication:** By `linkedin_id` (unique DB constraint).
+**Deduplication:** By `linkedin_id` + `user_id` in `_run_scrape` (see routers/jobs.py).
 
 ---
 
