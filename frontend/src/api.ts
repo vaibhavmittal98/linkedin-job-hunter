@@ -111,3 +111,51 @@ export async function markUnapplied(jobId: number): Promise<void> {
 export async function deleteJob(jobId: number): Promise<void> {
   await authFetch(`${API_BASE}/jobs/${jobId}`, { method: "DELETE" });
 }
+
+
+export async function generateAdhocCoverLetter(
+  description: string,
+  title?: string,
+  company?: string
+): Promise<{ content: string }> {
+  const res = await authFetch(`${API_BASE}/cover-letter/adhoc`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ description, title: title || null, company: company || null }),
+  });
+  return res.json();
+}
+
+export async function refineAdhocCoverLetter(
+  content: string,
+  message: string,
+  title?: string,
+  company?: string
+): Promise<{ content: string }> {
+  const res = await authFetch(`${API_BASE}/cover-letter/adhoc/refine`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content, message, title: title || null, company: company || null }),
+  });
+  return res.json();
+}
+
+export async function downloadAdhocCoverLetterPdf(
+  content: string,
+  title?: string,
+  company?: string
+): Promise<void> {
+  const token = localStorage.getItem("token");
+  const res = await fetch(`${API_BASE}/cover-letter/adhoc/pdf`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ content, title: title || null, company: company || null }),
+  });
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = company ? `cover_letter_${company.replace(/ /g, "_")}.pdf` : "cover_letter.pdf";
+  a.click();
+  URL.revokeObjectURL(url);
+}

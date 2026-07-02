@@ -41,3 +41,42 @@ JOB:
 Write the cover letter:
 """
     return _call_llm(prompt)
+
+
+def refine_cover_letter_adhoc(current: str, feedback: str, cv_text: str, title: str = "", company: str = "") -> str:
+    """Refine a standalone (ad-hoc) cover letter based on user feedback.
+
+    Isolated from the job-based refine flow in routers/jobs.py.
+    """
+    name = _get_name(cv_text)
+    job_lines = []
+    if title:
+        job_lines.append(f"- Title: {title}")
+    if company:
+        job_lines.append(f"- Company: {company}")
+    job_block = "\n".join(job_lines) if job_lines else "- (not specified)"
+
+    prompt = f"""Here is a cover letter that was written for a job application. The user wants changes.
+
+CURRENT COVER LETTER:
+{current}
+
+JOB:
+{job_block}
+
+CANDIDATE CV:
+{cv_text}
+
+USER FEEDBACK: {feedback}
+
+Rewrite the cover letter incorporating the feedback. Keep the same style rules:
+- Conversational, professional, no buzzwords, no pretentious language
+- No metrics/numbers from CV
+- Don't regurgitate the CV
+- Don't be abstract about why you're a good fit — just state facts
+- Short and human
+- End with "Best regards,\\n{name}" only once
+
+Return ONLY the new cover letter text, nothing else.
+"""
+    return _call_llm(prompt)

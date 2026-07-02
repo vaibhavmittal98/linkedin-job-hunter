@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Job, CoverLetter, UserProfile
-from app.schemas import JobOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut
+from app.schemas import JobOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest
 from app.services.scraper import scrape_linkedin_jobs
 from app.services.scorer import score_job
-from app.services.cover_letter import generate_cover_letter
-from app.services.pdf_generator import generate_pdf
+from app.services.cover_letter import generate_cover_letter, refine_cover_letter_adhoc
+from app.services.pdf_generator import generate_pdf, generate_pdf_adhoc
 from app.auth import get_current_user
 
 router = APIRouter(prefix="/api")
@@ -243,6 +243,45 @@ def download_cover_letter_pdf(job_id: int, db: Session = Depends(get_db), user: 
         content=pdf_bytes,
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=cover_letter_{job.company.replace(' ', '_')}.pdf"},
+    )
+
+
+@router.post("/cover-letter/adhoc")
+def create_adhoc_cover_letter(req: AdhocCoverLetterRequest, user: UserProfile = Depends(get_current_user)):
+    """Generate a standalone cover letter from a pasted job description (not stored)."""
+    if not user.cv_text:
+        raise HTTPException(400, "Upload your CV first")
+    job_dict = {"title": req.title or "", "company": req.company or "", "description": req.description}
+    content = generate_cover_letter(job_dict, user.cv_text)
+    return {"content": content}
+
+
+@router.post("/cover-letter/adhoc/refine")
+def refine_adhoc_cover_letter(req: AdhocRefineRequest, user: UserProfile = Depends(get_current_user)):
+    """Refine a standalone cover letter (not stored)."""
+    if not user.cv_text:
+        raise HTTPException(400, "Upload your CV first")
+    content = refine_cover_letter_adhoc(req.content, req.message, user.cv_text, req.title or "", req.company or "")
+    return {"content": content}
+
+
+@router.post("/cover-letter/adhoc/pdf")
+def download_adhoc_cover_letter_pdf(req: AdhocPdfRequest, user: UserProfile = Depends(get_current_user)):
+    """Download a standalone cover letter as PDF.
+
+    The 'Application for <title> at <company>' line is only rendered when
+    BOTH title and company are provided.
+    """
+    if req.title and req.company:
+        title, company = req.title, req.company
+    else:
+        title, company = "", ""
+    pdf_bytes = generate_pdf_adhoc(req.content, title, company, user.cv_text or "")
+    filename = f"cover_letter_{company.replace(' ', '_')}.pdf" if company else "cover_letter.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 

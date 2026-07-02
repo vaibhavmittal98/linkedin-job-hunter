@@ -62,3 +62,22 @@ class ScrapeRequest(BaseModel):
     max_results: int = 150
     scrape_all: bool = False
     published_at: str = ""  # "", "r86400", "r604800", "r2592000"
+
+
+class AdhocCoverLetterRequest(BaseModel):
+    description: str
+    title: str | None = None
+    company: str | None = None
+
+
+class AdhocRefineRequest(BaseModel):
+    content: str
+    message: str
+    title: str | None = None
+    company: str | None = None
+
+
+class AdhocPdfRequest(BaseModel):
+    content: str
+    title: str | None = None
+    company: str | None = None
