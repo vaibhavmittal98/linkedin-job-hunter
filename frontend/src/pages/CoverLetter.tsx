@@ -4,6 +4,7 @@ import {
   refineAdhocCoverLetter,
   downloadAdhocCoverLetterPdf,
 } from "../api";
+import RefineBox from "../components/RefineBox";
 
 export default function CoverLetter() {
   const [title, setTitle] = useState("");
@@ -11,8 +12,6 @@ export default function CoverLetter() {
   const [description, setDescription] = useState("");
   const [letter, setLetter] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [refineMsg, setRefineMsg] = useState("");
-  const [refining, setRefining] = useState(false);
   const [error, setError] = useState("");
 
   const handleGenerate = async () => {
@@ -30,21 +29,6 @@ export default function CoverLetter() {
       setError("Something went wrong generating the cover letter.");
     }
     setLoading(false);
-  };
-
-  const handleRefine = async () => {
-    if (!refineMsg.trim() || letter === null) return;
-    setRefining(true);
-    setError("");
-    try {
-      const result = await refineAdhocCoverLetter(letter, refineMsg, title, company);
-      if (typeof result.content === "string") setLetter(result.content);
-      setRefineMsg("");
-    } catch {
-      setError("Something went wrong refining the cover letter.");
-    } finally {
-      setRefining(false);
-    }
   };
 
   return (
@@ -90,24 +74,10 @@ export default function CoverLetter() {
           <h2>Generated Cover Letter</h2>
           <p style={{ whiteSpace: "pre-wrap" }}>{letter}</p>
 
-          <div className="refine-chat" style={{ marginTop: "1rem" }}>
-            <input
-              type="text"
-              placeholder="e.g. Make it longer, less formal, mention Kubernetes..."
-              value={refineMsg}
-              onChange={(e) => setRefineMsg(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && refineMsg.trim()) {
-                  e.preventDefault();
-                  handleRefine();
-                }
-              }}
-              style={{ marginBottom: "0.5rem" }}
-            />
-            <button className="btn" disabled={refining || !refineMsg.trim()} onClick={handleRefine}>
-              {refining ? "Refining..." : "Refine"}
-            </button>
-          </div>
+          <RefineBox
+            refineFn={(message) => refineAdhocCoverLetter(letter, message, title, company)}
+            onRefined={setLetter}
+          />
 
           <button
             className="btn"

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, deleteJob, Job, CoverLetter } from "../api";
+import RefineBox from "../components/RefineBox";
 
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
@@ -9,8 +10,6 @@ export default function JobDetail() {
   const [letter, setLetter] = useState<CoverLetter | null>(null);
   const [loading, setLoading] = useState(false);
   const [scoring, setScoring] = useState(false);
-  const [refineMsg, setRefineMsg] = useState("");
-  const [refining, setRefining] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -125,40 +124,10 @@ export default function JobDetail() {
         {letter ? (
           <>
             <p style={{ whiteSpace: "pre-wrap" }}>{letter.content}</p>
-            <div className="refine-chat" style={{ marginTop: "1rem" }}>
-              <input
-                type="text"
-                placeholder="e.g. Make it longer, mention Kubernetes more, less formal..."
-                value={refineMsg}
-                onChange={(e) => setRefineMsg(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && refineMsg.trim()) {
-                    e.preventDefault();
-                    (async () => {
-                      setRefining(true);
-                      const result = await refineCoverLetter(Number(id), refineMsg);
-                      setLetter({ ...letter, content: result.content });
-                      setRefineMsg("");
-                      setRefining(false);
-                    })();
-                  }
-                }}
-                style={{ marginBottom: "0.5rem" }}
-              />
-              <button
-                className="btn"
-                disabled={refining || !refineMsg.trim()}
-                onClick={async () => {
-                  setRefining(true);
-                  const result = await refineCoverLetter(Number(id), refineMsg);
-                  setLetter({ ...letter, content: result.content });
-                  setRefineMsg("");
-                  setRefining(false);
-                }}
-              >
-                {refining ? "Refining..." : "Refine"}
-              </button>
-            </div>
+            <RefineBox
+              refineFn={(message) => refineCoverLetter(Number(id), message)}
+              onRefined={(content) => setLetter({ ...letter, content })}
+            />
             <button className="btn" style={{ marginTop: "1rem" }} onClick={async () => {
               const token = localStorage.getItem("token");
               const res = await fetch(`/api/jobs/${id}/cover-letter/pdf`, { headers: { Authorization: `Bearer ${token}` } });
