@@ -1,11 +1,13 @@
 import json
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from fastapi.responses import Response
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Job, CoverLetter, UserProfile
-from app.schemas import JobOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest
+from app.schemas import JobOut, JobListOut, FilterOptionsOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest
 from app.services.scraper import scrape_linkedin_jobs
 from app.services.scorer import score_job
 from app.services.cover_letter import generate_cover_letter, refine_cover_letter_adhoc
@@ -15,12 +17,79 @@ from app.auth import get_current_user
 router = APIRouter(prefix="/api")
 
 
-@router.get("/jobs", response_model=list[JobOut])
-def list_jobs(min_score: float = 0, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
+@router.get("/jobs", response_model=JobListOut)
+def list_jobs(
+    min_score: float = 0,
+    search: str = "",
+    seniority: str = "",
+    employment_type: str = "",
+    location: str = "",
+    applied: str = "",  # "", "applied", "not_applied"
+    time_period: str = "",  # "", "day", "week", "month"
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    user: UserProfile = Depends(get_current_user),
+):
+    """List jobs for the current user with server-side filtering and pagination.
+
+    Read-only: this only issues SELECT/COUNT queries — no DB writes or schema changes.
+    """
+    limit = max(1, min(limit, 200))
+    offset = max(0, offset)
+
     query = db.query(Job).filter(Job.user_id == user.id)
+
     if min_score > 0:
         query = query.filter(Job.relevance_score >= min_score)
-    return query.order_by(Job.relevance_score.desc()).all()
+    if search:
+        like = f"%{search}%"
+        query = query.filter((Job.title.ilike(like)) | (Job.company.ilike(like)))
+    if seniority:
+        query = query.filter(Job.seniority_level == seniority)
+    if employment_type:
+        query = query.filter(Job.employment_type == employment_type)
+    if location:
+        query = query.filter(Job.location.ilike(f"%{location}%"))
+    if applied == "applied":
+        query = query.filter(Job.applied.is_(True))
+    elif applied == "not_applied":
+        query = query.filter(Job.applied.is_(False))
+    if time_period in ("day", "week", "month"):
+        days = {"day": 1, "week": 7, "month": 30}[time_period]
+        # posted_at is stored as ISO 'YYYY-MM-DD', so lexicographic >= matches chronological.
+        cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        query = query.filter(Job.posted_at >= cutoff)
+
+    total = query.count()
+    items = (
+        query.order_by(Job.relevance_score.desc())
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return {"items": items, "total": total, "limit": limit, "offset": offset}
+
+
+@router.get("/jobs/filter-options", response_model=FilterOptionsOut)
+def job_filter_options(db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
+    """Distinct seniority levels and employment types for the current user's jobs."""
+    seniority_rows = (
+        db.query(Job.seniority_level)
+        .filter(Job.user_id == user.id, Job.seniority_level.isnot(None), Job.seniority_level != "")
+        .distinct()
+        .all()
+    )
+    type_rows = (
+        db.query(Job.employment_type)
+        .filter(Job.user_id == user.id, Job.employment_type.isnot(None), Job.employment_type != "")
+        .distinct()
+        .all()
+    )
+    return {
+        "seniority_levels": sorted(r[0] for r in seniority_rows),
+        "employment_types": sorted(r[0] for r in type_rows),
+    }
 
 
 @router.get("/jobs/{job_id}", response_model=JobOut)

@@ -56,8 +56,47 @@ export interface UserProfile {
   preferences: Record<string, unknown>;
 }
 
-export async function fetchJobs(minScore = 0): Promise<Job[]> {
-  const res = await authFetch(`${API_BASE}/jobs?min_score=${minScore}`);
+export interface JobFilters {
+  minScore?: number;
+  search?: string;
+  seniority?: string;
+  employmentType?: string;
+  location?: string;
+  applied?: string; // "", "applied", "not_applied"
+  timePeriod?: string; // "", "day", "week", "month"
+  limit?: number;
+  offset?: number;
+}
+
+export interface JobListResponse {
+  items: Job[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface FilterOptions {
+  seniority_levels: string[];
+  employment_types: string[];
+}
+
+export async function fetchJobs(filters: JobFilters = {}): Promise<JobListResponse> {
+  const params = new URLSearchParams();
+  if (filters.minScore) params.set("min_score", String(filters.minScore));
+  if (filters.search) params.set("search", filters.search);
+  if (filters.seniority) params.set("seniority", filters.seniority);
+  if (filters.employmentType) params.set("employment_type", filters.employmentType);
+  if (filters.location) params.set("location", filters.location);
+  if (filters.applied) params.set("applied", filters.applied);
+  if (filters.timePeriod) params.set("time_period", filters.timePeriod);
+  params.set("limit", String(filters.limit ?? 50));
+  params.set("offset", String(filters.offset ?? 0));
+  const res = await authFetch(`${API_BASE}/jobs?${params.toString()}`);
+  return res.json();
+}
+
+export async function fetchFilterOptions(): Promise<FilterOptions> {
+  const res = await authFetch(`${API_BASE}/jobs/filter-options`);
   return res.json();
 }
 

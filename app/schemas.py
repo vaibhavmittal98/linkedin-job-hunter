@@ -40,6 +40,18 @@ class CoverLetterOut(BaseModel):
         from_attributes = True
 
 
+class JobListOut(BaseModel):
+    items: list[JobOut]
+    total: int
+    limit: int
+    offset: int
+
+
+class FilterOptionsOut(BaseModel):
+    seniority_levels: list[str]
+    employment_types: list[str]
+
+
 class UserProfileIn(BaseModel):
     name: str
     title: str

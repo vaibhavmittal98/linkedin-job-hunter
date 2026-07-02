@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { fetchJobs, Job } from "../api";
+import { fetchJobs, fetchFilterOptions, Job } from "../api";
+
+const PAGE_SIZE = 50;
 
 export default function Dashboard() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [loading, setLoading] = useState(false);
+
   const [minScore, setMinScore] = useState(0);
   const [search, setSearch] = useState("");
   const [seniorityFilter, setSeniorityFilter] = useState("");
@@ -12,43 +18,78 @@ export default function Dashboard() {
   const [appliedFilter, setAppliedFilter] = useState("not_applied");
   const [timeFilter, setTimeFilter] = useState("");
 
+  // Debounced copies of the free-text inputs so typing doesn't spam the API.
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
+  const [debouncedLocation, setDebouncedLocation] = useState(locationFilter);
+
+  const [seniorityLevels, setSeniorityLevels] = useState<string[]>([]);
+  const [employmentTypes, setEmploymentTypes] = useState<string[]>([]);
+
+  // Load dropdown options once.
   useEffect(() => {
-    fetchJobs(minScore).then(setJobs);
-  }, [minScore]);
+    fetchFilterOptions().then((opts) => {
+      setSeniorityLevels(opts.seniority_levels);
+      setEmploymentTypes(opts.employment_types);
+    });
+  }, []);
 
-  const filtered = jobs.filter((job) => {
-    const matchesSearch =
-      !search ||
-      job.title.toLowerCase().includes(search.toLowerCase()) ||
-      job.company.toLowerCase().includes(search.toLowerCase());
-    const matchesSeniority =
-      !seniorityFilter || job.seniority_level === seniorityFilter;
-    const matchesType = !typeFilter || job.employment_type === typeFilter;
-    const matchesLocation =
-      !locationFilter || (job.location || "").toLowerCase().includes(locationFilter.toLowerCase());
-    const matchesApplied =
-      !appliedFilter ||
-      (appliedFilter === "applied" && job.applied) ||
-      (appliedFilter === "not_applied" && !job.applied);
-    const matchesTime = (() => {
-      if (!timeFilter || !job.posted_at) return true;
-      const posted = new Date(job.posted_at);
-      const now = new Date();
-      const diffDays = (now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24);
-      if (timeFilter === "day") return diffDays <= 1;
-      if (timeFilter === "week") return diffDays <= 7;
-      if (timeFilter === "month") return diffDays <= 30;
-      return true;
-    })();
-    return matchesSearch && matchesSeniority && matchesType && matchesLocation && matchesApplied && matchesTime;
-  });
+  // Debounce text inputs (300ms).
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedLocation(locationFilter), 300);
+    return () => clearTimeout(t);
+  }, [locationFilter]);
 
-  const seniorityLevels = [...new Set(jobs.map((j) => j.seniority_level).filter(Boolean))];
-  const employmentTypes = [...new Set(jobs.map((j) => j.employment_type).filter(Boolean))];
+  // Reset to first page whenever any filter changes.
+  useEffect(() => {
+    setPage(0);
+  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter]);
+
+  // Fetch the current page from the server.
+  useEffect(() => {
+    setLoading(true);
+    fetchJobs({
+      minScore,
+      search: debouncedSearch,
+      seniority: seniorityFilter,
+      employmentType: typeFilter,
+      location: debouncedLocation,
+      applied: appliedFilter,
+      timePeriod: timeFilter,
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+    })
+      .then((res) => {
+        setJobs(res.items);
+        setTotal(res.total);
+      })
+      .finally(() => setLoading(false));
+  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter, page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const to = Math.min(total, (page + 1) * PAGE_SIZE);
+
+  // Compute a compact list of page numbers to show (with ellipses).
+  const pageNumbers = useMemo(() => {
+    const pages: (number | "…")[] = [];
+    const window = 2; // pages on each side of current
+    for (let i = 0; i < totalPages; i++) {
+      if (i === 0 || i === totalPages - 1 || (i >= page - window && i <= page + window)) {
+        pages.push(i);
+      } else if (pages[pages.length - 1] !== "…") {
+        pages.push("…");
+      }
+    }
+    return pages;
+  }, [totalPages, page]);
 
   return (
     <>
-      <h1>Jobs ({filtered.length})</h1>
+      <h1>Jobs ({total})</h1>
 
       <div className="filters">
         <input
@@ -61,13 +102,13 @@ export default function Dashboard() {
           <select value={seniorityFilter} onChange={(e) => setSeniorityFilter(e.target.value)}>
             <option value="">All Seniority</option>
             {seniorityLevels.map((s) => (
-              <option key={s} value={s!}>{s}</option>
+              <option key={s} value={s}>{s}</option>
             ))}
           </select>
           <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
             <option value="">All Types</option>
             {employmentTypes.map((t) => (
-              <option key={t} value={t!}>{t}</option>
+              <option key={t} value={t}>{t}</option>
             ))}
           </select>
           <input
@@ -101,12 +142,17 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {filtered.length === 0 && <p className="empty">No jobs match your filters.</p>}
+      {!loading && total > 0 && (
+        <p className="results-summary" style={{ color: "#555", fontSize: "0.9rem" }}>
+          Showing {from}–{to} of {total}
+        </p>
+      )}
+
+      {loading && <p className="empty">Loading…</p>}
+      {!loading && total === 0 && <p className="empty">No jobs match your filters.</p>}
 
       <div className="job-list">
-        {[...filtered]
-          .sort((a, b) => (b.relevance_score ?? -1) - (a.relevance_score ?? -1))
-          .map((job) => (
+        {jobs.map((job) => (
           <Link to={`/jobs/${job.id}`} key={job.id} className="job-card-link" target="_blank" rel="noopener noreferrer">
             <div className="job-card">
               <div className="job-card-header">
@@ -142,6 +188,31 @@ export default function Dashboard() {
           </Link>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination" style={{ display: "flex", gap: "0.5rem", alignItems: "center", justifyContent: "center", marginTop: "1.5rem", flexWrap: "wrap" }}>
+          <button className="btn btn-outline" disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))}>
+            ← Prev
+          </button>
+          {pageNumbers.map((p, i) =>
+            p === "…" ? (
+              <span key={`ellipsis-${i}`} style={{ padding: "0 0.25rem" }}>…</span>
+            ) : (
+              <button
+                key={p}
+                className={p === page ? "btn" : "btn btn-outline"}
+                onClick={() => setPage(p)}
+                aria-current={p === page ? "page" : undefined}
+              >
+                {p + 1}
+              </button>
+            )
+          )}
+          <button className="btn btn-outline" disabled={page >= totalPages - 1} onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+            Next →
+          </button>
+        </div>
+      )}
     </>
   );
 }
