@@ -57,6 +57,10 @@
 
 **Refinement:** Users can iteratively edit via chat — feedback is sent back to LLM with current letter + CV.
 
+**Standalone (ad-hoc):** `refine_cover_letter_adhoc()` supports the stateless
+cover-letter flow (pasted job description, nothing stored). Generation reuses
+`generate_cover_letter()`.
+
 ---
 
 ## `app/services/pdf_generator.py`
@@ -64,6 +68,10 @@
 **Purpose:** Export cover letters as PDF.
 
 Uses `fpdf2`. Layout: name header, contact info, separator, "Application for X at Y", body paragraphs. Handles unicode sanitization.
+
+`generate_pdf_adhoc()` is the standalone variant: same layout, but the
+"Application for X at Y" line is rendered only when both title and company are
+supplied. Kept separate so the job-based `generate_pdf()` is unaffected.
 
 ---
 

@@ -10,10 +10,13 @@ frontend/src/
 ├── App.tsx             # Routes + protected route wrapper
 ├── api.ts              # Typed API client with auth headers
 ├── index.css           # Global styles
+├── components/
+│   └── RefineBox.tsx   # Shared cover-letter refine input + button
 └── pages/
-    ├── Dashboard.tsx   # Job list, filters, search
+    ├── Dashboard.tsx   # Paginated job list, server-side filters, search
     ├── JobDetail.tsx   # Job view, score, cover letter, refine, PDF
     ├── Scrape.tsx      # Manual scrape with options
+    ├── CoverLetter.tsx # Standalone cover letter from a pasted job description
     ├── Schedule.tsx    # Scheduled scrapes + run history
     ├── Profile.tsx     # Username display + CV update
     ├── Signup.tsx      # Account creation with CV upload
@@ -27,10 +30,17 @@ frontend/src/
 | `/` | Dashboard | ✓ |
 | `/jobs/:id` | JobDetail | ✓ |
 | `/scrape` | Scrape | ✓ |
+| `/cover-letter` | CoverLetter | ✓ |
 | `/schedule` | Schedule | ✓ |
 | `/profile` | Profile | ✓ |
 | `/signup` | Signup | ✗ |
 | `/login` | Login | ✗ |
+
+## Dashboard pagination
+
+Filtering, sorting, and paging are server-side (50 jobs/page). `fetchJobs`
+returns `{ items, total, limit, offset }`; dropdown options come from
+`/api/jobs/filter-options`. UI has Prev/Next + numbered pages.
 
 ## Auth Flow
 

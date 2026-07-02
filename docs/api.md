@@ -32,8 +32,25 @@ Upload new CV (PDF). Re-scores all non-applied jobs in background.
 
 ## Jobs
 
-### `GET /api/jobs?min_score=0`
-List all jobs sorted by relevance score descending.
+### `GET /api/jobs`
+List jobs for the current user with server-side filtering and pagination,
+sorted by relevance score descending.
+
+**Query params (all optional):**
+- `min_score` (float, default 0)
+- `search` (matches title or company, case-insensitive)
+- `seniority`, `employment_type` (exact match)
+- `location` (case-insensitive substring)
+- `applied` — `""` | `"applied"` | `"not_applied"`
+- `time_period` — `""` | `"day"` | `"week"` | `"month"` (filters on `posted_at`)
+- `limit` (default 50, capped at 200), `offset` (default 0)
+
+**Response:** `{"items": [Job, ...], "total": 3121, "limit": 50, "offset": 0}`
+
+### `GET /api/jobs/filter-options`
+Distinct filter values for the current user's jobs (used by dashboard dropdowns).
+
+**Response:** `{"seniority_levels": ["Entry level", ...], "employment_types": ["Full-time", ...]}`
 
 ### `GET /api/jobs/{id}`
 Get single job with all fields.
@@ -91,6 +108,29 @@ Refine cover letter with feedback.
 
 ### `GET /api/jobs/{id}/cover-letter/pdf`
 Download cover letter as PDF.
+
+---
+
+## Standalone Cover Letters (ad-hoc, not stored)
+
+Generate a cover letter from a pasted job description for a job that is not in
+the database. Stateless — nothing is persisted.
+
+### `POST /api/cover-letter/adhoc`
+**Body:** `{"description": "...", "title": "optional", "company": "optional"}`
+
+**Response:** `{"content": "..."}`
+
+### `POST /api/cover-letter/adhoc/refine`
+**Body:** `{"content": "...", "message": "make it shorter", "title": "optional", "company": "optional"}`
+
+**Response:** `{"content": "..."}`
+
+### `POST /api/cover-letter/adhoc/pdf`
+**Body:** `{"content": "...", "title": "optional", "company": "optional"}`
+
+Returns PDF bytes. The "Application for X at Y" line is included only when both
+`title` and `company` are provided.
 
 ---
 
