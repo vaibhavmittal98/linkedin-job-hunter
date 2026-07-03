@@ -3,8 +3,10 @@ import {
   generateAdhocCoverLetter,
   refineAdhocCoverLetter,
   downloadAdhocCoverLetterPdf,
+  chat,
 } from "../api";
 import RefineBox from "../components/RefineBox";
+import ChatBox from "../components/ChatBox";
 
 export default function CoverLetter() {
   const [title, setTitle] = useState("");
@@ -88,6 +90,20 @@ export default function CoverLetter() {
           </button>
         </div>
       )}
+
+      <div className="card">
+        <h2>Ask about this job</h2>
+        <p className="placeholder-text">
+          Ask questions about this role and how it fits your CV. Uses your CV and the
+          job description above as context — leave the description empty to chat about
+          your CV alone. The description is read fresh on each message; if you change it
+          mid-conversation, use Reset to start over.
+        </p>
+        <ChatBox
+          sendFn={(messages) => chat(messages, description, title, company)}
+          placeholder="e.g. Do I meet the requirements? What should I emphasize?"
+        />
+      </div>
     </>
   );
 }
