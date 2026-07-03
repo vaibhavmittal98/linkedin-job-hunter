@@ -85,8 +85,7 @@ export default function JobDetail() {
       </div>
 
       <div className="job-detail-actions">
-        {job.apply_url && <a href={job.apply_url} target="_blank" rel="noreferrer" className="btn btn-green">Apply</a>}
-        {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="btn">{job.apply_url ? "View on LinkedIn" : "Apply on LinkedIn"}</a>}
+        {job.url && <a href={job.url} target="_blank" rel="noreferrer" className="btn btn-green">Apply on LinkedIn</a>}
         {job.company_website && <a href={job.company_website} target="_blank" rel="noreferrer" className="btn btn-outline">Company Website</a>}
         <button
           className={job.applied ? "btn btn-outline" : "btn btn-green"}
