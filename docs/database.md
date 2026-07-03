@@ -88,3 +88,41 @@ SQLite database stored at `./jobs.db`. Auto-created on first server start.
 | `total_scraped` | INTEGER | Total from Apify |
 | `status` | VARCHAR | "success" or "error" |
 | `error_message` | TEXT | Error details if failed |
+
+## Backups
+
+The production database (`~/app/jobs.db` on the EC2 box) is backed up nightly to S3.
+
+### Mechanism
+- **Script:** `/usr/local/bin/backup-jobs-db.sh` (owned by root).
+- **Schedule:** root cron, daily at **07:00** (server TZ is `Europe/Berlin`, so this stays correct across DST). Logs to `/var/log/jobs-db-backup.log`.
+- **Method:** `sqlite3 jobs.db ".backup ..."` — a safe online backup that won't corrupt a DB that is being written to.
+- **Local copies:** newest **7** kept in `/home/ubuntu/backups/`; older ones pruned on each run.
+- **S3:** uploaded to `s3://linkedin-job-hunter-backups-810299942836/jobs.db/jobs-<timestamp>.db` (region `eu-north-1`).
+
+### Retention
+Rolling **7-day** window on both sides (not a weekly wipe):
+- Local: script keeps the newest 7 files.
+- S3: bucket lifecycle rule `expire-backups-7-days` expires each object 7 days after it was created (lifecycle runs on a daily batch, so an object may linger up to ~24h past the 7-day mark).
+
+To change the window, update `KEEP` in the script **and** the S3 lifecycle rule.
+
+### Bucket hardening
+- Block Public Access: all four settings ON.
+- Default encryption: SSE-S3 (AES256).
+
+### Access model
+- The EC2 instance uses IAM **instance role** `linkedin-job-hunter-backup` (no long-lived keys on the box).
+- Its policy is scoped to only `s3:PutObject` on `.../jobs.db/*`. It intentionally **cannot** list, read, or delete objects — so a compromised box can't exfiltrate or wipe existing backups. (This is why `aws s3 ls`/`cp`-down from the box is denied; use admin credentials for those.)
+
+### Restore
+Backups are NOT auto-restored. To restore manually (uses admin creds, not the instance role):
+```bash
+# stop the app so the DB isn't being written during the swap
+sudo systemctl stop linkedin-job-hunter
+aws s3 cp s3://linkedin-job-hunter-backups-810299942836/jobs.db/jobs-<timestamp>.db \
+  /home/ubuntu/app/jobs.db --region eu-north-1
+sudo systemctl start linkedin-job-hunter
+```
+
+> Note: this is a **recovery** guardrail, not a deletion lock. Because the app must write to `jobs.db`, the live file cannot be made truly immutable — but nightly off-box copies mean at most ~1 day of data is at risk. **Never delete `jobs.db` without explicit permission.**
