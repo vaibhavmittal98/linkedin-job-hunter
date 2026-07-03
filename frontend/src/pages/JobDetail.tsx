@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, deleteJob, Job, CoverLetter } from "../api";
+import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, deleteJob, jobChat, Job, CoverLetter } from "../api";
 import RefineBox from "../components/RefineBox";
+import ChatBox from "../components/ChatBox";
 
 export default function JobDetail() {
   const { id } = useParams<{ id: string }>();
@@ -150,6 +151,18 @@ export default function JobDetail() {
             </button>
           </div>
         )}
+      </div>
+
+      <div className="card">
+        <h2>Ask about this job</h2>
+        <p className="placeholder-text">
+          Ask questions about this role and how it fits your CV. Uses your CV and this
+          job's description as context.
+        </p>
+        <ChatBox
+          sendFn={(messages) => jobChat(job.id, messages)}
+          placeholder="e.g. Do I meet the requirements? What should I emphasize?"
+        />
       </div>
     </>
   );

@@ -198,3 +198,41 @@ export async function downloadAdhocCoverLetterPdf(
   a.click();
   URL.revokeObjectURL(url);
 }
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Chat about a specific job (CV + that job's description as context). */
+export async function jobChat(
+  jobId: number,
+  messages: ChatMessage[]
+): Promise<{ reply: string }> {
+  const res = await authFetch(`${API_BASE}/jobs/${jobId}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages }),
+  });
+  return res.json();
+}
+
+/** Standalone chat (CV context + optional pasted job description). */
+export async function chat(
+  messages: ChatMessage[],
+  description?: string,
+  title?: string,
+  company?: string
+): Promise<{ reply: string }> {
+  const res = await authFetch(`${API_BASE}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages,
+      description: description || null,
+      title: title || null,
+      company: company || null,
+    }),
+  });
+  return res.json();
+}

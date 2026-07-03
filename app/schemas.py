@@ -93,3 +93,21 @@ class AdhocPdfRequest(BaseModel):
     content: str
     title: str | None = None
     company: str | None = None
+
+
+class ChatMessage(BaseModel):
+    role: str  # "user" | "assistant"
+    content: str
+
+
+class JobChatRequest(BaseModel):
+    """Chat about a specific job (job context comes from the DB via path id)."""
+    messages: list[ChatMessage]
+
+
+class ChatRequest(BaseModel):
+    """Standalone chat. Job context is optional; empty => CV-only chat."""
+    messages: list[ChatMessage]
+    description: str | None = None
+    title: str | None = None
+    company: str | None = None

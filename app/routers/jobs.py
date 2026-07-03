@@ -7,10 +7,11 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db
 from app.models import Job, CoverLetter, UserProfile
-from app.schemas import JobOut, JobListOut, FilterOptionsOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest
+from app.schemas import JobOut, JobListOut, FilterOptionsOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest, JobChatRequest, ChatRequest
 from app.services.scraper import scrape_linkedin_jobs
 from app.services.scorer import score_job
 from app.services.cover_letter import generate_cover_letter, refine_cover_letter_adhoc
+from app.services.chat import chat_about_job
 from app.services.pdf_generator import generate_pdf, generate_pdf_adhoc
 from app.auth import get_current_user
 
@@ -297,6 +298,28 @@ Return ONLY the new cover letter text, nothing else.
     return {"content": letter.content}
 
 
+@router.post("/jobs/{job_id}/chat")
+def job_chat(job_id: int, req: JobChatRequest, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
+    """Stateless Q&A about a specific job, with CV + job description as context.
+
+    History is supplied by the client on every call; nothing is stored.
+    """
+    job = db.query(Job).filter(Job.id == job_id, Job.user_id == user.id).first()
+    if not job:
+        raise HTTPException(404, "Job not found")
+    if not user.cv_text:
+        raise HTTPException(400, "Upload your CV first")
+
+    reply = chat_about_job(
+        [m.model_dump() for m in req.messages],
+        user.cv_text,
+        title=job.title or "",
+        company=job.company or "",
+        description=job.description or "",
+    )
+    return {"reply": reply}
+
+
 @router.get("/jobs/{job_id}/cover-letter/pdf")
 def download_cover_letter_pdf(job_id: int, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
     """Download cover letter as PDF."""
@@ -352,6 +375,26 @@ def download_adhoc_cover_letter_pdf(req: AdhocPdfRequest, user: UserProfile = De
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
+
+
+@router.post("/chat")
+def standalone_chat(req: ChatRequest, user: UserProfile = Depends(get_current_user)):
+    """Stateless Q&A with CV as context and an optional pasted job description.
+
+    When no description is provided, the chat operates with the CV alone.
+    History is supplied by the client on every call; nothing is stored.
+    """
+    if not user.cv_text:
+        raise HTTPException(400, "Upload your CV first")
+
+    reply = chat_about_job(
+        [m.model_dump() for m in req.messages],
+        user.cv_text,
+        title=req.title or "",
+        company=req.company or "",
+        description=req.description or "",
+    )
+    return {"reply": reply}
 
 
 @router.post("/profile", response_model=UserProfileOut)
