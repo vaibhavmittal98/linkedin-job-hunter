@@ -10,33 +10,55 @@ Uses [OpenRouter](https://openrouter.ai/) — an OpenAI-compatible API that supp
 ```
 LLM_API_KEY=sk-or-v1-your-key
 LLM_MODEL=deepseek/deepseek-v4-flash
+LLM_REASONING_EFFORT=high        # optional; extended thinking for scoring only
 ```
 
 ## How It Works
 
-Single function `_call_llm(prompt)` in `app/services/scorer.py`:
+`_call_llm(prompt, reasoning_effort="")` in `app/services/scorer.py`:
 
 ```python
+payload = {"model": settings.llm_model, "messages": [{"role": "user", "content": prompt}]}
+if reasoning_effort:
+    payload["reasoning"] = {"effort": reasoning_effort}
 response = httpx.post(
     "https://openrouter.ai/api/v1/chat/completions",
     headers={"Authorization": f"Bearer {settings.llm_api_key}"},
-    json={"model": settings.llm_model, "messages": [{"role": "user", "content": prompt}]},
+    json=payload,
+    timeout=60,
 )
 return response.json()["choices"][0]["message"]["content"]
 ```
 
-Used by both scorer and cover letter generator.
+Used by the scorer and the cover letter generator/refiner. The chat feature uses a
+separate `_call_llm_messages()` in `app/services/chat.py` that sends a full
+system + conversation message array.
+
+### Extended thinking (reasoning)
+`reasoning_effort` is opt-in and only passed by `score_job()` (from
+`settings.llm_reasoning_effort`). Cover-letter refine calls leave it empty, so they
+are unaffected. Valid OpenRouter effort values: `minimal | low | medium | high |
+xhigh | max`. `deepseek-v4-flash` supports reasoning natively. An invalid value
+returns HTTP 400 (confirming the param is applied, not ignored).
 
 ## Scoring
 
 Multi-criteria scoring (each 0-10, weighted):
 - Skills Match (30%)
-- Experience Level (25%)
+- Experience Level (25%) — scored strictly against required seniority/years
 - Tech Stack Overlap (20%)
 - Domain Relevance (10%)
-- Disqualifiers (15%, halves total if < 5)
+- Disqualifiers (15%)
 
-Returns JSON: `{"skills_match": 8, "experience_level": 7, ...}`
+**Disqualifier gate:** hard blocker (`<= 2`, e.g. a required spoken language the CV
+lacks) caps total at 15; soft concern (`3-4`) halves total. Returns JSON:
+`{"skills_match": 8, "experience_level": 7, ...}`
+
+## Chat
+
+Stateless Q&A about a job + CV (`app/services/chat.py`). System prompt is built from
+the CV + optional job context; when no job description is present it's CV-only.
+Backed by `POST /api/jobs/{id}/chat` and `POST /api/chat`. Nothing is persisted.
 
 ## Cover Letters
 

@@ -10,7 +10,8 @@ All configuration via environment variables, loaded from `.env`.
 | `APIFY_API_TOKEN` | Yes | — | Apify API token |
 | `LLM_API_KEY` | Yes | — | OpenRouter API key |
 | `LLM_PROVIDER` | No | `openrouter` | LLM provider |
-| `LLM_MODEL` | No | `deepseek/deepseek-v4-flash` | Model for scoring/letters |
+| `LLM_MODEL` | No | `deepseek/deepseek-v4-flash` | Model for scoring/letters/chat |
+| `LLM_REASONING_EFFORT` | No | `""` (off) | Extended thinking for scoring only. `minimal`\|`low`\|`medium`\|`high`\|`xhigh`\|`max`. Prod: `high` |
 | `SECRET_KEY` | No | `change-me-in-production` | JWT signing key |
 
 ## `.env.example`
@@ -21,6 +22,7 @@ APIFY_API_TOKEN=your_apify_token_here
 LLM_API_KEY=your_openrouter_key_here
 LLM_PROVIDER=openrouter
 LLM_MODEL=deepseek/deepseek-v4-flash
+LLM_REASONING_EFFORT=
 SECRET_KEY=change-me-in-production
 ```
 

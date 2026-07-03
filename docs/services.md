@@ -37,11 +37,23 @@
 | Experience Level | 25% | Seniority alignment |
 | Tech Stack Overlap | 20% | Tools/languages match |
 | Domain Relevance | 10% | Industry fit |
-| Disqualifiers | 15% | Hard blockers (language, certs) |
+| Disqualifiers | 15% | Hard blockers (spoken language, certs, clearance) |
 
-**Disqualifier penalty:** If disqualifiers score < 5, total score is halved.
+**Disqualifier gate:** `<= 2` (hard blocker, e.g. a required spoken language the CV lacks) caps total at 15; `3-4` (soft concern) halves total. Programming languages are judged under Tech Stack, not Disqualifiers.
+
+**Extended thinking:** `_call_llm(prompt, reasoning_effort="")` — scoring passes `settings.llm_reasoning_effort` (`LLM_REASONING_EFFORT` env, `high` in prod). Opt-in, so cover-letter refine (also uses `_call_llm`) is unaffected.
 
 **Output:** `(score: float, reason: str)` — reason shows per-criteria breakdown.
+
+---
+
+## `app/services/chat.py`
+
+**Purpose:** Stateless Q&A chat about a job + the candidate's CV. Nothing persisted.
+
+- `chat_about_job(history, cv_text, title, company, description)` builds a system prompt from the CV + optional job context (CV-only when no description), then calls `_call_llm_messages()` with the full system + conversation array.
+- `_call_llm_messages()` is separate from `scorer._call_llm` so scoring/cover-letter flows are untouched.
+- Backs `POST /api/jobs/{id}/chat` (job context from DB) and `POST /api/chat` (CV + optional pasted description).
 
 ---
 

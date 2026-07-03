@@ -11,12 +11,13 @@ frontend/src/
 ├── api.ts              # Typed API client with auth headers
 ├── index.css           # Global styles
 ├── components/
-│   └── RefineBox.tsx   # Shared cover-letter refine input + button
+│   ├── RefineBox.tsx   # Shared cover-letter refine input + button
+│   └── ChatBox.tsx     # Shared stateless Q&A chat widget (job + CV context)
 └── pages/
     ├── Dashboard.tsx   # Paginated job list, server-side filters, search
-    ├── JobDetail.tsx   # Job view, score, cover letter, refine, PDF
+    ├── JobDetail.tsx   # Job view, score, cover letter, refine, PDF, ask-about-job chat
     ├── Scrape.tsx      # Manual scrape with options
-    ├── CoverLetter.tsx # Standalone cover letter from a pasted job description
+    ├── CoverLetter.tsx # Standalone cover letter from a pasted job description + ask-about-job chat
     ├── Schedule.tsx    # Scheduled scrapes + run history
     ├── Profile.tsx     # Username display + CV update
     ├── Signup.tsx      # Account creation with CV upload

@@ -66,6 +66,14 @@ Mark job as applied.
 ### `POST /api/jobs/{id}/unapply`
 Mark job as not applied.
 
+### `POST /api/jobs/{id}/chat`
+Stateless Q&A about a specific job, with the user's CV + that job's description as
+context. History is supplied by the client on every call; nothing is stored.
+
+**Body:** `{"messages": [{"role": "user", "content": "Do I meet the requirements?"}]}`
+
+**Response:** `{"reply": "..."}`
+
 ---
 
 ## Scraping
@@ -131,6 +139,23 @@ the database. Stateless — nothing is persisted.
 
 Returns PDF bytes. The "Application for X at Y" line is included only when both
 `title` and `company` are provided.
+
+---
+
+## Chat (ad-hoc Q&A, not stored)
+
+Stateless Q&A about a job + CV. Separate from the cover-letter refine flow.
+The client sends the full conversation on every call; nothing is persisted.
+
+### `POST /api/chat`
+CV as context plus an optional pasted job description. When no `description` is
+provided, the chat operates with the CV alone.
+
+**Body:** `{"messages": [{"role": "user", "content": "..."}], "description": "optional", "title": "optional", "company": "optional"}`
+
+**Response:** `{"reply": "..."}`
+
+> The per-job variant `POST /api/jobs/{id}/chat` is documented under **Jobs**.
 
 ---
 

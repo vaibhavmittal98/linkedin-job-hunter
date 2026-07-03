@@ -7,6 +7,7 @@ Automates the job hunting pipeline: scrapes LinkedIn jobs via Apify, scores them
 - **LinkedIn job scraping** — Pulls listings via Apify (`curious_coder/linkedin-jobs-scraper`), only jobs from the last 24h
 - **Relevance scoring** — LLM-powered multi-criteria scoring (skills match, experience level, tech stack, domain, disqualifiers) against your CV
 - **Cover letter generation** — Conversational, human-sounding letters with iterative refinement chat + PDF export
+- **Ask-about-job chat** — Stateless Q&A about a job and your CV (on job detail and cover letter pages)
 - **Scheduled scrapes** — Daily automated scrapes with persistent schedules and run history
 - **Dashboard** — Search, filter (seniority, type, location, applied status), sorted by score
 - **Authentication** — Signup with CV upload, JWT-based auth
@@ -49,6 +50,7 @@ DATABASE_URL=sqlite:///./jobs.db
 APIFY_API_TOKEN=your_apify_token
 LLM_API_KEY=sk-or-v1-your-openrouter-key
 LLM_MODEL=deepseek/deepseek-v4-flash
+LLM_REASONING_EFFORT=high
 SECRET_KEY=your-random-secret-key
 ```
 
@@ -89,6 +91,7 @@ app/
     ├── scraper.py          # Apify integration (async run/poll/abort)
     ├── scorer.py           # Multi-criteria LLM scoring via OpenRouter
     ├── cover_letter.py     # LLM cover letter generation
+    ├── chat.py             # Stateless Q&A chat (CV + optional job context)
     ├── pdf_generator.py    # Cover letter PDF export
     └── scheduler.py        # APScheduler management + DB persistence
 frontend/src/
