@@ -58,8 +58,8 @@ export default function Profile() {
           unchanged unless you opt in to re-scoring below.
         </p>
         <input type="file" accept=".pdf" onChange={(e) => setCv(e.target.files?.[0] || null)} />
-        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem", fontSize: "0.85rem" }}>
-          <input type="checkbox" checked={rescore} onChange={(e) => setRescore(e.target.checked)} />
+        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginTop: "0.5rem", fontWeight: 400, fontSize: "0.85rem" }}>
+          <input type="checkbox" checked={rescore} onChange={(e) => setRescore(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Re-score non-applied jobs with the new CV (uses one LLM call per job)
         </label>
         <button className="btn" onClick={handleUpdateCv} disabled={loading || !cv} style={{ marginTop: "0.5rem" }}>
