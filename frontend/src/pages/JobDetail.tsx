@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { fetchJob, getCoverLetter, generateCoverLetter, markApplied, markUnapplied, scoreJob, refineCoverLetter, deleteJob, jobChat, Job, CoverLetter } from "../api";
 import RefineBox from "../components/RefineBox";
+import CopyButton from "../components/CopyButton";
 import ChatBox from "../components/ChatBox";
 
 export default function JobDetail() {
@@ -128,19 +129,22 @@ export default function JobDetail() {
               refineFn={(message) => refineCoverLetter(Number(id), message)}
               onRefined={(content) => setLetter({ ...letter, content })}
             />
-            <button className="btn" style={{ marginTop: "1rem" }} onClick={async () => {
-              const token = localStorage.getItem("token");
-              const res = await fetch(`/api/jobs/${id}/cover-letter/pdf`, { headers: { Authorization: `Bearer ${token}` } });
-              const blob = await res.blob();
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `cover_letter_${job.company.replace(/ /g, "_")}.pdf`;
-              a.click();
-              URL.revokeObjectURL(url);
-            }}>
-              Download PDF
-            </button>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+              <CopyButton text={letter.content} />
+              <button className="btn" onClick={async () => {
+                const token = localStorage.getItem("token");
+                const res = await fetch(`/api/jobs/${id}/cover-letter/pdf`, { headers: { Authorization: `Bearer ${token}` } });
+                const blob = await res.blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `cover_letter_${job.company.replace(/ /g, "_")}.pdf`;
+                a.click();
+                URL.revokeObjectURL(url);
+              }}>
+                Download PDF
+              </button>
+            </div>
           </>
         ) : (
           <div>

@@ -6,6 +6,7 @@ import {
   chat,
 } from "../api";
 import RefineBox from "../components/RefineBox";
+import CopyButton from "../components/CopyButton";
 import ChatBox from "../components/ChatBox";
 
 export default function CoverLetter() {
@@ -81,13 +82,15 @@ export default function CoverLetter() {
             onRefined={setLetter}
           />
 
-          <button
-            className="btn"
-            style={{ marginTop: "1rem" }}
-            onClick={() => downloadAdhocCoverLetterPdf(letter, title, company)}
-          >
-            Download PDF
-          </button>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem", flexWrap: "wrap" }}>
+            <CopyButton text={letter} />
+            <button
+              className="btn"
+              onClick={() => downloadAdhocCoverLetterPdf(letter, title, company)}
+            >
+              Download PDF
+            </button>
+          </div>
         </div>
       )}
 
