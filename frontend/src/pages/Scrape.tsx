@@ -43,8 +43,8 @@ export default function Scrape() {
           <option value="r604800">Last week</option>
           <option value="r2592000">Last month</option>
         </select>
-        <label>Max results (min 150)</label>
-        <input type="number" min={150} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 150)} disabled={scrapeAll} />
+        <label>Max results</label>
+        <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 1)} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Scrape all available (up to 1000)

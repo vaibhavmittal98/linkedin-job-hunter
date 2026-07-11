@@ -78,10 +78,11 @@ def get_me(user: UserProfile = Depends(get_current_user)):
 async def update_cv(
     background_tasks: BackgroundTasks,
     cv: UploadFile = File(...),
+    rescore: bool = Form(False),
     db: Session = Depends(get_db),
     user: UserProfile = Depends(get_current_user),
 ):
-    """Update CV and re-score all non-applied jobs."""
+    """Update CV. Optionally re-score all non-applied jobs (opt-in via `rescore`)."""
     import os
     import fitz
 
@@ -106,10 +107,12 @@ async def update_cv(
     user.cv_text = cv_text
     db.commit()
 
-    # Re-score non-applied jobs in background
-    background_tasks.add_task(_rescore_jobs, cv_text)
+    # Re-score non-applied jobs in background only if the user opted in.
+    if rescore:
+        background_tasks.add_task(_rescore_jobs, cv_text)
+        return {"status": "ok", "message": "CV updated. Re-scoring jobs in background."}
 
-    return {"status": "ok", "message": "CV updated. Re-scoring jobs in background."}
+    return {"status": "ok", "message": "CV updated."}
 
 
 def _rescore_jobs(cv_text: str):

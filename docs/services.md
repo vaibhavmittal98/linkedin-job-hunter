@@ -21,7 +21,7 @@ Both return the same `list[dict]` shape, so `_run_scrape` is backend-agnostic.
 - `locations` — array of locations
 - `saveOnlyUniqueItems: true` — dedupe within the run
 - `enrichCompanyData: false` — skip extra company page requests
-- `maxItems` — set to `max(max_results, 150)` unless `scrape_all` is true
+- `maxItems` — set to `max_results` unless `scrape_all` is true
 - `publishedAt` — time window (`r86400` 24h, `r604800` week, `r2592000` month)
 
 ### Bright Data (`_scrape_brightdata`)

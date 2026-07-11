@@ -37,7 +37,7 @@ def _scrape_apify(keywords: list[str], locations: list[str] = [], max_results: i
         "enrichCompanyData": False,
     }
     if not scrape_all:
-        run_input["maxItems"] = max(max_results, 150)
+        run_input["maxItems"] = max_results
     if published_at:
         run_input["publishedAt"] = published_at
 
