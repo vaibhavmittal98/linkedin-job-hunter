@@ -5,8 +5,25 @@ from app.config import settings
 ACTOR_ID = "cheap_scraper~linkedin-job-scraper"
 BASE_URL = f"https://api.apify.com/v2/actors/{ACTOR_ID}"
 
+BRIGHTDATA_BASE = "https://api.brightdata.com/datasets/v3"
+
 
 def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
+    """Dispatch to the configured scraper backend.
+
+    Switch backends via SCRAPER_PROVIDER in .env ("apify" | "brightdata").
+    Both backends return the same list-of-dicts shape, so callers
+    (`_run_scrape`) need no changes.
+    """
+    provider = (settings.scraper_provider or "apify").strip().lower()
+    if provider == "brightdata":
+        if not settings.brightdata_api_token or settings.brightdata_api_token == "your_brightdata_token_here":
+            return _demo_data(keywords, locations, max_results)
+        return _scrape_brightdata(keywords, locations, max_results, scrape_all, published_at)
+    return _scrape_apify(keywords, locations, max_results, scrape_all, published_at)
+
+
+def _scrape_apify(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
     """Scrape LinkedIn jobs using cheap_scraper/linkedin-job-scraper on Apify."""
     if not settings.apify_api_token or settings.apify_api_token == "your_apify_token_here":
         return _demo_data(keywords, locations, max_results)
@@ -88,6 +105,127 @@ def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_res
             "benefits": "",
             "job_poster_name": item.get("posterFullName", ""),
             "job_poster_profile_url": item.get("posterProfileUrl", ""),
+        })
+
+    return results
+
+
+# Map Apify's publishedAt codes -> Bright Data time_range labels.
+_BRIGHTDATA_TIME_RANGE = {
+    "r86400": "Past 24 hours",
+    "r604800": "Past week",
+    "r2592000": "Past month",
+}
+
+
+def _scrape_brightdata(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
+    """Scrape LinkedIn jobs via Bright Data's LinkedIn-jobs dataset.
+
+    Flow: trigger (discover_new by keyword) -> poll progress -> download snapshot.
+    Returns the same dict shape as the Apify path so callers are unaffected.
+    Only core fields are populated; extras (salary, company detail, poster,
+    benefits) are intentionally skipped for this temporary switch.
+    """
+    token = settings.brightdata_api_token
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+    time_range = _BRIGHTDATA_TIME_RANGE.get(published_at, "")
+
+    # One input row per keyword x location combination.
+    locs = locations or [""]
+    inputs = []
+    for kw in keywords:
+        for loc in locs:
+            inputs.append({
+                "location": loc,
+                "keyword": kw,
+                "country": settings.brightdata_country,
+                "time_range": time_range,
+                "job_type": "",
+                "experience_level": "",
+                "remote": "",
+                "company": "",
+                "location_radius": "",
+            })
+
+    params = {
+        "dataset_id": settings.brightdata_dataset_id,
+        "notify": "false",
+        "include_errors": "true",
+        "type": "discover_new",
+        "discover_by": "keyword",
+    }
+    # Bright Data has a per-run minimum; keep parity with Apify's floor.
+    if not scrape_all:
+        params["limit_per_input"] = max(max_results, 1)
+
+    trigger = httpx.post(
+        f"{BRIGHTDATA_BASE}/trigger",
+        headers=headers,
+        params=params,
+        json=inputs,
+        timeout=60,
+    )
+    trigger.raise_for_status()
+    snapshot_id = trigger.json().get("snapshot_id")
+    if not snapshot_id:
+        return []
+
+    # Poll until the snapshot is ready (no hard timeout, mirrors Apify path).
+    while True:
+        time.sleep(10)
+        prog = httpx.get(
+            f"{BRIGHTDATA_BASE}/progress/{snapshot_id}",
+            headers=headers,
+            timeout=30,
+        )
+        prog.raise_for_status()
+        status = prog.json().get("status")
+        if status == "ready":
+            break
+        if status in ("failed", "error", "canceled"):
+            return []
+
+    # Download results.
+    snap = httpx.get(
+        f"{BRIGHTDATA_BASE}/snapshot/{snapshot_id}",
+        headers=headers,
+        params={"format": "json"},
+        timeout=120,
+    )
+    snap.raise_for_status()
+    items = snap.json()
+    if not isinstance(items, list):
+        return []
+
+    results = []
+    for item in items:
+        # job_poster can be None (not just an empty dict) — skip it anyway.
+        results.append({
+            "linkedin_id": str(item.get("job_posting_id") or ""),
+            "title": item.get("job_title") or "",
+            "company": item.get("company_name") or "",
+            "company_logo": item.get("company_logo") or "",
+            "company_url": item.get("company_url") or "",
+            "company_website": "",
+            "company_description": "",
+            "company_address": "",
+            "company_employees_count": None,
+            "location": item.get("job_location") or "",
+            "url": item.get("url") or "",
+            "apply_url": item.get("apply_link") or "",
+            "description": item.get("job_summary") or "",
+            "description_html": item.get("job_description_formatted") or "",
+            "salary": "",
+            "posted_at": item.get("job_posted_date") or "",
+            "seniority_level": item.get("job_seniority_level") or "",
+            "employment_type": item.get("job_employment_type") or "",
+            "job_function": item.get("job_function") or "",
+            "industries": item.get("job_industries") or "",
+            "applicants_count": str(item.get("job_num_applicants")) if item.get("job_num_applicants") is not None else "",
+            "benefits": "",
+            "job_poster_name": "",
+            "job_poster_profile_url": "",
         })
 
     return results
