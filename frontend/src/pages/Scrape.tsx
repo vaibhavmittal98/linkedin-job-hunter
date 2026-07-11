@@ -4,7 +4,7 @@ import { triggerScrape } from "../api";
 export default function Scrape() {
   const [keywords, setKeywords] = useState("");
   const [locations, setLocations] = useState("");
-  const [maxResults, setMaxResults] = useState(150);
+  const [maxResults, setMaxResults] = useState<number | "">(150);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [publishedAt, setPublishedAt] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,7 +15,7 @@ export default function Scrape() {
     setResult(null);
     const kws = keywords.split(",").map(k => k.trim()).filter(Boolean);
     const locs = locations.split(",").map(l => l.trim()).filter(Boolean);
-    const res = await triggerScrape(kws, locs, maxResults, scrapeAll, publishedAt);
+    const res = await triggerScrape(kws, locs, Math.max(1, Number(maxResults) || 1), scrapeAll, publishedAt);
     setResult(res);
     setLoading(false);
   };
@@ -44,7 +44,7 @@ export default function Scrape() {
           <option value="r2592000">Last month</option>
         </select>
         <label>Max results</label>
-        <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 1)} disabled={scrapeAll} />
+        <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(e.target.value === "" ? "" : Number(e.target.value))} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Scrape all available (up to 1000)

@@ -29,7 +29,7 @@ export default function SchedulePage() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [keywords, setKeywords] = useState("");
   const [locations, setLocations] = useState("");
-  const [maxResults, setMaxResults] = useState(150);
+  const [maxResults, setMaxResults] = useState<number | "">(150);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [publishedAt, setPublishedAt] = useState("r86400");
   const [frequency, setFrequency] = useState("daily");
@@ -54,7 +54,7 @@ export default function SchedulePage() {
     const res = await fetch("/api/schedules", {
       method: "POST",
       headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ keywords: kws, locations: locs, max_results: maxResults, scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+      body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -92,7 +92,7 @@ export default function SchedulePage() {
         <label>Locations (comma-separated)</label>
         <input value={locations} onChange={(e) => setLocations(e.target.value)} placeholder="Stockholm, Netherlands" />
         <label>Max results</label>
-        <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(Number(e.target.value) || 1)} disabled={scrapeAll} />
+        <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(e.target.value === "" ? "" : Number(e.target.value))} disabled={scrapeAll} />
         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Scrape all available
