@@ -2,7 +2,11 @@
 
 ## `app/services/scraper.py`
 
-**Purpose:** Fetch LinkedIn jobs via Apify.
+**Purpose:** Fetch LinkedIn jobs. `scrape_linkedin_jobs(...)` dispatches to one
+of two backends based on `SCRAPER_PROVIDER` (`apify` default, or `brightdata`).
+Both return the same `list[dict]` shape, so `_run_scrape` is backend-agnostic.
+
+### Apify (`_scrape_apify`)
 
 **Actor:** `cheap_scraper~linkedin-job-scraper`
 
@@ -19,6 +23,25 @@
 - `enrichCompanyData: false` — skip extra company page requests
 - `maxItems` — set to `max(max_results, 150)` unless `scrape_all` is true
 - `publishedAt` — time window (`r86400` 24h, `r604800` week, `r2592000` month)
+
+### Bright Data (`_scrape_brightdata`)
+
+**Dataset:** `gd_lpfll7v5hcqtkxl6l` (LinkedIn jobs). Env: `BRIGHTDATA_API_TOKEN`,
+`BRIGHTDATA_DATASET_ID`, `BRIGHTDATA_COUNTRY`. Falls back to demo data if the
+token is missing/placeholder.
+
+**Flow (Dataset API v3):**
+1. `POST /datasets/v3/trigger?dataset_id=...&type=discover_new&discover_by=keyword`
+   with a JSON array of input rows (one per keyword × location)
+2. Poll `GET /datasets/v3/progress/{snapshot_id}` every 10s until `ready`
+3. `GET /datasets/v3/snapshot/{snapshot_id}?format=json`
+
+`publishedAt` codes map to `time_range` labels (`Past 24 hours`/`Past week`/
+`Past month`). Only core fields are mapped; salary/company-detail/poster/
+benefits are skipped. See the `scraping` skill for the full field mapping.
+
+> Bright Data is unreachable from local WSL (Cloudflare Gateway TLS interception
+> with an untrusted CA). Run it from EC2.
 
 **Deduplication:** By `linkedin_id` + `user_id` in `_run_scrape` (see routers/jobs.py).
 

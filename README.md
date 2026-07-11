@@ -1,10 +1,10 @@
 # Job Application Automator
 
-Automates the job hunting pipeline: scrapes LinkedIn jobs via Apify, scores them on screening likelihood using an LLM, and generates tailored cover letters.
+Automates the job hunting pipeline: scrapes LinkedIn jobs (via Apify or Bright Data), scores them on screening likelihood using an LLM, and generates tailored cover letters.
 
 ## Features
 
-- **LinkedIn job scraping** — Pulls listings via Apify (`curious_coder/linkedin-jobs-scraper`), only jobs from the last 24h
+- **LinkedIn job scraping** — Pulls listings via a switchable backend (Apify or Bright Data, set by `SCRAPER_PROVIDER`)
 - **Relevance scoring** — LLM-powered multi-criteria scoring (skills match, experience level, tech stack, domain, disqualifiers) against your CV
 - **Cover letter generation** — Conversational, human-sounding letters with iterative refinement chat + PDF export
 - **Ask-about-job chat** — Stateless Q&A about a job and your CV (on job detail and cover letter pages)
@@ -20,7 +20,7 @@ Automates the job hunting pipeline: scrapes LinkedIn jobs via Apify, scores them
 | Backend | Python, FastAPI, SQLAlchemy |
 | Frontend | React, TypeScript, Vite |
 | Database | SQLite |
-| Scraping | Apify (`curious_coder/linkedin-jobs-scraper`) |
+| Scraping | Apify or Bright Data (switchable via `SCRAPER_PROVIDER`) |
 | LLM | OpenRouter (deepseek-v4-flash default) |
 | Scheduling | APScheduler |
 | Auth | JWT (python-jose) + bcrypt |
@@ -31,7 +31,7 @@ Automates the job hunting pipeline: scrapes LinkedIn jobs via Apify, scores them
 
 - Python 3.11+
 - Node.js 18+
-- [Apify](https://apify.com/) account with API token
+- [Apify](https://apify.com/) account with API token (or a [Bright Data](https://brightdata.com/) token if using `SCRAPER_PROVIDER=brightdata`)
 - [OpenRouter](https://openrouter.ai/) account with API key
 
 ### One-command setup
