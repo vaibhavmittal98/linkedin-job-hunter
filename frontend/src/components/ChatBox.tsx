@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { ChatMessage } from "../api";
+import CopyButton from "./CopyButton";
 
 interface ChatBoxProps {
   /**
@@ -59,6 +60,12 @@ export default function ChatBox({ sendFn, placeholder }: ChatBoxProps) {
             <div key={i} className={`chat-msg chat-msg-${m.role}`}>
               <span className="chat-role">{m.role === "user" ? "You" : "Assistant"}</span>
               <p style={{ whiteSpace: "pre-wrap", margin: "0.25rem 0 0" }}>{m.content}</p>
+              {m.role === "assistant" && (
+                <CopyButton
+                  text={m.content}
+                  style={{ marginTop: "0.5rem", padding: "0.2rem 0.6rem", fontSize: "0.8rem" }}
+                />
+              )}
             </div>
           ))}
           {sending && <p className="placeholder-text">Thinking...</p>}
