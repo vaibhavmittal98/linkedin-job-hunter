@@ -2,6 +2,23 @@
 
 SQLite database stored at `./jobs.db`. Auto-created on first server start.
 
+## Engine configuration
+
+Configured in `app/db.py`. A SQLAlchemy `connect` event listener runs these
+PRAGMAs on every connection:
+
+- `journal_mode=WAL` — readers and the single writer run concurrently. Without
+  WAL, a large scrape holds one long write transaction (autoflush opens it
+  early; it stays open through all serial per-job scoring until the single final
+  commit), which made concurrent dashboard reads fail with "database is locked"
+  and show 0 jobs until the scrape finished.
+- `busy_timeout=30000` — a writer waits up to 30s for a lock instead of erroring
+  immediately.
+- `synchronous=NORMAL` — safe default under WAL.
+
+WAL creates `jobs.db-wal` / `jobs.db-shm` sidecar files next to the DB. The
+nightly `sqlite3 .backup` job is WAL-safe.
+
 ## Tables
 
 ### `jobs`

@@ -97,6 +97,13 @@ Start a background scrape.
 
 **Response:** `{"status": "started", "message": "Scraping started. Jobs will appear on the dashboard soon."}`
 
+The endpoint returns immediately (fire-and-forget via FastAPI `BackgroundTasks`).
+The background task `_run_scrape` fetches all results, dedupes by
+`linkedin_id` + `user_id`, scores each job serially (one LLM call per job when a
+CV is present), and does a **single commit at the very end** — so newly scraped
+jobs only appear once the whole run + scoring finishes. Previously scraped jobs
+stay visible during the run because SQLite runs in WAL mode (see `docs/database.md`).
+
 ---
 
 ## Cover Letters
