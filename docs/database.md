@@ -115,7 +115,7 @@ The production database (`~/app/jobs.db` on the EC2 box) is backed up nightly to
 - **Schedule:** root cron, daily at **07:00** (server TZ is `Europe/Berlin`, so this stays correct across DST). Logs to `/var/log/jobs-db-backup.log`.
 - **Method:** `sqlite3 jobs.db ".backup ..."` — a safe online backup that won't corrupt a DB that is being written to.
 - **Local copies:** newest **7** kept in `/home/ubuntu/backups/`; older ones pruned on each run.
-- **S3:** uploaded to `s3://linkedin-job-hunter-backups-810299942836/jobs.db/jobs-<timestamp>.db` (region `eu-north-1`).
+- **S3:** uploaded to `s3://<backup-bucket>/jobs.db/jobs-<timestamp>.db` (region `eu-north-1`).
 
 ### Retention
 Rolling **7-day** window on both sides (not a weekly wipe):
@@ -137,7 +137,7 @@ Backups are NOT auto-restored. To restore manually (uses admin creds, not the in
 ```bash
 # stop the app so the DB isn't being written during the swap
 sudo systemctl stop linkedin-job-hunter
-aws s3 cp s3://linkedin-job-hunter-backups-810299942836/jobs.db/jobs-<timestamp>.db \
+aws s3 cp s3://<backup-bucket>/jobs.db/jobs-<timestamp>.db \
   /home/ubuntu/app/jobs.db --region eu-north-1
 sudo systemctl start linkedin-job-hunter
 ```
