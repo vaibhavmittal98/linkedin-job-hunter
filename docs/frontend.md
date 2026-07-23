@@ -12,7 +12,8 @@ frontend/src/
 ├── index.css           # Global styles
 ├── components/
 │   ├── RefineBox.tsx   # Shared cover-letter refine input + button
-│   └── ChatBox.tsx     # Shared stateless Q&A chat widget (job + CV context)
+│   ├── ChatBox.tsx     # Shared stateless Q&A chat widget (job + CV context)
+│   └── CopyButton.tsx  # Shared copy-to-clipboard button (cover letters + chat replies)
 └── pages/
     ├── Dashboard.tsx   # Paginated job list, server-side filters, search
     ├── JobDetail.tsx   # Job view, score, cover letter, refine, PDF, ask-about-job chat

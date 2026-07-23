@@ -24,9 +24,12 @@ Get current user info.
 **Response:** `{"username": "...", "has_cv": true}`
 
 ### `POST /api/auth/update-cv`
-Upload new CV (PDF). Re-scores all non-applied jobs in background.
+Upload new CV (PDF). Multipart form: `cv` (PDF file), `rescore` (bool, default
+`false`). Re-scoring all non-applied jobs is **opt-in** — it only runs in the
+background when `rescore=true`.
 
-**Response:** `{"status": "ok", "message": "CV updated. Re-scoring jobs in background."}`
+**Response (rescore=true):** `{"status": "ok", "message": "CV updated. Re-scoring jobs in background."}`
+**Response (default):** `{"status": "ok", "message": "CV updated."}`
 
 ---
 
@@ -196,3 +199,12 @@ Delete a schedule.
 
 ### `GET /api/schedules/{job_id}/history`
 Get run history (last 20 runs) with jobs_added, total_scraped, status.
+
+---
+
+## Health
+
+### `GET /api/health`
+Liveness check. No auth required.
+
+**Response:** `{"status": "ok"}`

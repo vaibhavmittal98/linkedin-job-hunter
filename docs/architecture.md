@@ -45,7 +45,7 @@
 
 - **Scraping** — runs in FastAPI `BackgroundTasks`, doesn't block the response
 - **Scheduled scrapes** — APScheduler fires cron jobs, calls the same scrape function
-- **Re-scoring** — triggered on CV update, scores all non-applied jobs in background
+- **Re-scoring** — opt-in on CV update (`rescore=true` on `/api/auth/update-cv`), scores all non-applied jobs in background
 
 ## Design Principles
 
