@@ -26,8 +26,9 @@ description: AWS EC2 deployment, Nginx config, systemd service, and deploy workf
 > ```
 
 > The real IP and AWS account ID are **not** stored in this repo (scrubbed to
-> `<ec2-ip>` / `<aws-account-id>`). Look up the live IP with the AWS CLI command
-> below; keep the account ID in your local/private notes.
+> `<ec2-ip>` / `<aws-account-id>`). Real values live in the gitignored
+> `infra.local.md` at the repo root, and the live IP can be looked up with the
+> AWS CLI command below.
 
 ### Look up the current IP (if the instance restarted)
 The instance is tagged `Name=linkedin-job-hunter`. On stop/start the public IP changes unless an Elastic IP is attached, so verify it live:

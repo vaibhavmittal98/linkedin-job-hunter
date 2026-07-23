@@ -7,3 +7,7 @@ venv/
 uploads/
 .kiro/*
 !.kiro/skills/
+
+# Local-only infra/secrets reference (real IPs, account IDs, bucket names).
+# Never commit — repo keeps only <placeholders>.
+infra.local.md
