@@ -136,7 +136,7 @@ export default function SchedulePage() {
           <input type="text" maxLength={2} value={minute} onChange={(e) => setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="0" style={{ width: "60px", textAlign: "center" }} />
         </div>
         <button className="btn" onClick={handleCreate} disabled={!keywords || creating}>{creating ? "Creating..." : "Create Schedule"}</button>
-        {message && <p style={{ marginTop: "0.5rem", color: message.startsWith("Scheduled") ? "green" : "red" }}>{message}</p>
+        {message && <p style={{ marginTop: "0.5rem", color: message.startsWith("Scheduled") ? "green" : "red" }}>{message}</p>}
       </div>
 
       <div className="card">
