@@ -115,3 +115,4 @@ frontend/src/
 3. **Local Bright Data testing** — fails from WSL due to Cloudflare Gateway TLS interception. Test from EC2.
 4. **Forgetting to build frontend** — a backend-only restart doesn't pick up UI changes. Always rebuild `frontend/dist/` when frontend files change.
 5. **Bare IP access** — Nginx only serves `vaibing.org`; raw IP returns empty reply by design. Use the domain.
+6. **Testing locally** — this WSL environment is for code editing only. The app runs on EC2. Don't try to start uvicorn, run scrapes, or access `jobs.db` locally. Test via `curl https://vaibing.org/api/...` or SSH into EC2.
