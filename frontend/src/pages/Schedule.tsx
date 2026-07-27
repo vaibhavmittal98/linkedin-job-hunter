@@ -37,6 +37,7 @@ export default function SchedulePage() {
   const [hour, setHour] = useState("2");
   const [minute, setMinute] = useState("0");
   const [message, setMessage] = useState("");
+  const [creating, setCreating] = useState(false);
   const [history, setHistory] = useState<RunHistory[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
 
@@ -49,19 +50,31 @@ export default function SchedulePage() {
   useEffect(() => { loadSchedules(); }, []);
 
   const handleCreate = async () => {
-    const kws = keywords.split(",").map(k => k.trim()).filter(Boolean);
-    const locs = locations.split(",").map(l => l.trim()).filter(Boolean);
-    const res = await fetch("/api/schedules", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...authHeaders() },
-      body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setMessage(`Scheduled: runs daily at ${String(Number(hour) || 0).padStart(2, "0")}:${String(Number(minute) || 0).padStart(2, "0")}`);
-      loadSchedules();
-    } else {
-      setMessage(data.detail || "Failed");
+    setCreating(true);
+    setMessage("");
+    try {
+      const kws = keywords.split(",").map(k => k.trim()).filter(Boolean);
+      const locs = locations.split(",").map(l => l.trim()).filter(Boolean);
+      if (kws.length === 0) {
+        setMessage("Please enter at least one keyword");
+        return;
+      }
+      const res = await fetch("/api/schedules", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`Scheduled: runs daily at ${String(Number(hour) || 0).padStart(2, "0")}:${String(Number(minute) || 0).padStart(2, "0")}`);
+        loadSchedules();
+      } else {
+        setMessage(data.detail || `Error: ${res.status}`);
+      }
+    } catch (err: any) {
+      setMessage(err.message || "Network error");
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -122,8 +135,8 @@ export default function SchedulePage() {
           <span style={{ alignSelf: "center" }}>:</span>
           <input type="text" maxLength={2} value={minute} onChange={(e) => setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="0" style={{ width: "60px", textAlign: "center" }} />
         </div>
-        <button className="btn" onClick={handleCreate} disabled={!keywords}>Create Schedule</button>
-        {message && <p style={{ marginTop: "0.5rem", color: "green" }}>{message}</p>}
+        <button className="btn" onClick={handleCreate} disabled={!keywords || creating}>{creating ? "Creating..." : "Create Schedule"}</button>
+        {message && <p style={{ marginTop: "0.5rem", color: message.startsWith("Error") || message.startsWith("Network") || message.startsWith("Please") || message.includes("Failed") || message.includes("Upload") ? "red" : "green" }}>{message}</p>
       </div>
 
       <div className="card">
