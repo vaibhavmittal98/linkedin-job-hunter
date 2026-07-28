@@ -1,7 +1,19 @@
 """Scheduled job management with persistence."""
 
+import logging
+
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+
+# Surface APScheduler activity (including missed/misfired runs) in the journal.
+# No app-wide logging config exists, so attach a handler explicitly — otherwise
+# INFO records are dropped by Python's default (WARNING-only) last-resort handler.
+_aps_logger = logging.getLogger("apscheduler")
+_aps_logger.setLevel(logging.INFO)
+if not _aps_logger.handlers:
+    _handler = logging.StreamHandler()
+    _handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
+    _aps_logger.addHandler(_handler)
 
 scheduler = BackgroundScheduler()
 scheduler.start()
