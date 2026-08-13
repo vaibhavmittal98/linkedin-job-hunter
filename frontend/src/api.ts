@@ -36,6 +36,7 @@ export interface Job {
   applied: boolean;
   relevance_score: number | null;
   score_reason: string | null;
+  ind_sponsor: boolean | null;
   scraped_at: string | null;
 }
 
@@ -64,6 +65,7 @@ export interface JobFilters {
   location?: string;
   applied?: string; // "", "applied", "not_applied"
   timePeriod?: string; // "", "day", "week", "month"
+  indSponsor?: string; // "", "sponsor", "non_sponsor"
   limit?: number;
   offset?: number;
 }
@@ -89,6 +91,7 @@ export async function fetchJobs(filters: JobFilters = {}): Promise<JobListRespon
   if (filters.location) params.set("location", filters.location);
   if (filters.applied) params.set("applied", filters.applied);
   if (filters.timePeriod) params.set("time_period", filters.timePeriod);
+  if (filters.indSponsor) params.set("ind_sponsor", filters.indSponsor);
   params.set("limit", String(filters.limit ?? 50));
   params.set("offset", String(filters.offset ?? 0));
   const res = await authFetch(`${API_BASE}/jobs?${params.toString()}`);

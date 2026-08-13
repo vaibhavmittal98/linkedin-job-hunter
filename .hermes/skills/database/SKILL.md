@@ -57,6 +57,7 @@ Side effect: creates `jobs.db-wal` / `jobs.db-shm` sidecar files. The nightly `s
 | relevance_score | FLOAT | 0-100 |
 | score_reason | TEXT | Breakdown string |
 | applied | BOOLEAN | Default False |
+| ind_sponsor | BOOLEAN | IND recognised-sponsor match; NULL = not evaluated |
 | scraped_at | DATETIME | |
 
 ### `cover_letters`

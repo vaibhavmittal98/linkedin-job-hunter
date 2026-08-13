@@ -24,6 +24,7 @@ class JobOut(BaseModel):
     applied: bool
     relevance_score: float | None
     score_reason: str | None
+    ind_sponsor: bool | None
     scraped_at: datetime | None
 
     class Config:

@@ -5,6 +5,10 @@ node_modules/
 frontend/dist/
 venv/
 uploads/
+
+# Intermediate IND-sponsor working files (raw dumps, shortlists, collapse maps).
+# The app only needs app/data/ind_sponsors.json, which IS committed.
+/data/
 .kiro/*
 !.kiro/skills/
 .hermes/*

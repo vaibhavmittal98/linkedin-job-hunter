@@ -55,6 +55,7 @@ description: SQLite database schema, models, and migration patterns. Load when m
 | relevance_score | FLOAT | 0-100 |
 | score_reason | TEXT | Breakdown string |
 | applied | BOOLEAN | Default False |
+| ind_sponsor | BOOLEAN | IND recognised-sponsor match; NULL = not evaluated |
 | scraped_at | DATETIME | |
 
 ### `cover_letters`

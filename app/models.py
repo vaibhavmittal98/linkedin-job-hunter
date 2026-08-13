@@ -38,6 +38,7 @@ class Job(Base):
     relevance_score = Column(Float)
     score_reason = Column(Text)
     applied = Column(Boolean, default=False)
+    ind_sponsor = Column(Boolean)  # True/False if matched against IND register; NULL = not evaluated
     scraped_at = Column(DateTime, default=datetime.utcnow)
 
     cover_letter = relationship("CoverLetter", back_populates="job", uselist=False)

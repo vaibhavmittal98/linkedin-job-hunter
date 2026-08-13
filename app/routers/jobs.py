@@ -10,6 +10,7 @@ from app.models import Job, CoverLetter, UserProfile
 from app.schemas import JobOut, JobListOut, FilterOptionsOut, CoverLetterOut, ScrapeRequest, UserProfileIn, UserProfileOut, AdhocCoverLetterRequest, AdhocRefineRequest, AdhocPdfRequest, JobChatRequest, ChatRequest
 from app.services.scraper import scrape_linkedin_jobs
 from app.services.scorer import score_job
+from app.services.sponsor import is_sponsor
 from app.services.cover_letter import generate_cover_letter, refine_cover_letter_adhoc
 from app.services.chat import chat_about_job
 from app.services.pdf_generator import generate_pdf, generate_pdf_adhoc
@@ -27,6 +28,7 @@ def list_jobs(
     location: str = "",
     applied: str = "",  # "", "applied", "not_applied"
     time_period: str = "",  # "", "day", "week", "month"
+    ind_sponsor: str = "",  # "", "sponsor", "non_sponsor"
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
@@ -56,6 +58,11 @@ def list_jobs(
         query = query.filter(Job.applied.is_(True))
     elif applied == "not_applied":
         query = query.filter(Job.applied.is_(False))
+    if ind_sponsor == "sponsor":
+        query = query.filter(Job.ind_sponsor.is_(True))
+    elif ind_sponsor == "non_sponsor":
+        # Treat NULL (not yet evaluated) as non-sponsor for filtering purposes.
+        query = query.filter((Job.ind_sponsor.is_(False)) | (Job.ind_sponsor.is_(None)))
     if time_period in ("day", "week", "month"):
         days = {"day": 1, "week": 7, "month": 30}[time_period]
         # posted_at is stored as ISO 'YYYY-MM-DD', so lexicographic >= matches chronological.
@@ -159,6 +166,7 @@ def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scr
                 job_poster_profile_url=raw.get("job_poster_profile_url"),
                 relevance_score=score,
                 score_reason=score_reason,
+                ind_sponsor=is_sponsor(raw.get("company") or ""),
             )
             db.add(job)
             added += 1

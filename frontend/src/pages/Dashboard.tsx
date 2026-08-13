@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [locationFilter, setLocationFilter] = useState("");
   const [appliedFilter, setAppliedFilter] = useState("not_applied");
   const [timeFilter, setTimeFilter] = useState("");
+  const [sponsorFilter, setSponsorFilter] = useState("");
 
   // Debounced copies of the free-text inputs so typing doesn't spam the API.
   const [debouncedSearch, setDebouncedSearch] = useState(search);
@@ -46,7 +47,7 @@ export default function Dashboard() {
   // Reset to first page whenever any filter changes.
   useEffect(() => {
     setPage(0);
-  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter]);
+  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter, sponsorFilter]);
 
   // Fetch the current page from the server.
   useEffect(() => {
@@ -59,6 +60,7 @@ export default function Dashboard() {
       location: debouncedLocation,
       applied: appliedFilter,
       timePeriod: timeFilter,
+      indSponsor: sponsorFilter,
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,
     })
@@ -67,7 +69,7 @@ export default function Dashboard() {
         setTotal(res.total);
       })
       .finally(() => setLoading(false));
-  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter, page]);
+  }, [minScore, debouncedSearch, seniorityFilter, typeFilter, debouncedLocation, appliedFilter, timeFilter, sponsorFilter, page]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const from = total === 0 ? 0 : page * PAGE_SIZE + 1;
@@ -128,6 +130,11 @@ export default function Dashboard() {
             <option value="day">Last 24 hours</option>
             <option value="week">Last week</option>
             <option value="month">Last month</option>
+          </select>
+          <select value={sponsorFilter} onChange={(e) => setSponsorFilter(e.target.value)}>
+            <option value="">All companies</option>
+            <option value="sponsor">IND sponsors only</option>
+            <option value="non_sponsor">Non-sponsors</option>
           </select>
           <div className="score-filter">
             <label>Min score: {minScore}</label>

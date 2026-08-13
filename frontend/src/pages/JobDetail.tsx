@@ -37,7 +37,17 @@ export default function JobDetail() {
         {job.company_logo && <img src={job.company_logo} alt={job.company} className="company-logo-lg" />}
         <div>
           <h1>{job.title}</h1>
-          <p className="company-name-lg">{job.company}</p>
+          <p className="company-name-lg">
+            {job.company}
+            {job.ind_sponsor && (
+              <span
+                title="This company is on the IND public register of recognised sponsors"
+                style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 4, background: "#e6f4ea", color: "#1e7e34", fontSize: "0.75em", fontWeight: 600, verticalAlign: "middle" }}
+              >
+                IND Sponsor
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
