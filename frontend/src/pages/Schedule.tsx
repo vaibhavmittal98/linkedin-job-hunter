@@ -94,7 +94,7 @@ export default function SchedulePage() {
   return (
     <>
       <h1>Scheduled Scrapes</h1>
-      <p style={{ color: "#666", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
+      <p style={{ color: "var(--text-muted)", marginBottom: "1.5rem", fontSize: "0.9rem" }}>
         Schedule automatic daily scrapes. Duplicates are skipped automatically. New jobs are scored against your CV as they come in.
       </p>
 
@@ -144,21 +144,21 @@ export default function SchedulePage() {
         {schedules.length === 0 && <p className="placeholder-text">No scheduled scrapes yet.</p>}
         {schedules.map((s) => (
           <div key={s.id}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid var(--border)" }}>
               <div style={{ cursor: "pointer" }} onClick={() => handleShowHistory(s.id)}>
                 <strong>{s.keywords.join(", ")}</strong> — {s.locations.join(", ") || "Any location"}
-                <p style={{ fontSize: "0.8rem", color: "#666" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
                   Runs {s.frequency === "weekly" ? `weekly on ${s.day_of_week}` : "daily"} at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"} | {s.published_at === "r86400" ? "Last 24h" : s.published_at === "r604800" ? "Last week" : s.published_at === "r2592000" ? "Last month" : "Any time"}
                 </p>
               </div>
               <button className="btn btn-outline" onClick={() => handleDelete(s.id)} style={{ fontSize: "0.8rem" }}>Delete</button>
             </div>
             {selectedSchedule === s.id && (
-              <div style={{ padding: "0.75rem", background: "#f9f9f9", borderRadius: "6px", marginBottom: "0.5rem" }}>
+              <div style={{ padding: "0.75rem", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "0.5rem" }}>
                 <strong>Run History</strong>
-                {history.length === 0 && <p style={{ fontSize: "0.85rem", color: "#888" }}>No runs yet.</p>}
+                {history.length === 0 && <p style={{ fontSize: "0.85rem", color: "var(--text-dim)" }}>No runs yet.</p>}
                 {history.map((h, i) => (
-                  <div key={i} style={{ fontSize: "0.85rem", padding: "0.25rem 0", borderBottom: "1px solid #eee" }}>
+                  <div key={i} style={{ fontSize: "0.85rem", padding: "0.25rem 0", borderBottom: "1px solid var(--border)" }}>
                     <span>{h.ran_at}</span> — <span style={{ color: h.status === "success" ? "green" : "red" }}>{h.status}</span> — Added {h.jobs_added} / Scraped {h.total_scraped}
                     {h.error && <p style={{ color: "red", fontSize: "0.8rem" }}>{h.error}</p>}
                   </div>

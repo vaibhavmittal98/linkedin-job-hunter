@@ -42,7 +42,7 @@ export default function JobDetail() {
             {job.ind_sponsor && (
               <span
                 title="This company is on the IND public register of recognised sponsors"
-                style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 4, background: "#e6f4ea", color: "#1e7e34", fontSize: "0.75em", fontWeight: 600, verticalAlign: "middle" }}
+                style={{ marginLeft: 8, padding: "2px 8px", borderRadius: 4, background: "rgba(34,197,94,0.15)", color: "#4ade80", fontSize: "0.75em", fontWeight: 600, verticalAlign: "middle" }}
               >
                 IND Sponsor
               </span>
@@ -91,7 +91,7 @@ export default function JobDetail() {
           </button>
         )}
         {job.score_reason && (
-          <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#555" }}><strong>Reason:</strong> {job.score_reason}</p>
+          <p style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "var(--text-muted)" }}><strong>Reason:</strong> {job.score_reason}</p>
         )}
       </div>
 

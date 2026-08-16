@@ -53,7 +53,7 @@ export default function Profile() {
       </div>
       <div className="card">
         <h2>Update CV</h2>
-        <p style={{ fontSize: "0.85rem", color: "#666", marginBottom: "0.75rem" }}>
+        <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
           Upload a new CV to update your profile. Scoring of existing jobs stays
           unchanged unless you opt in to re-scoring below.
         </p>

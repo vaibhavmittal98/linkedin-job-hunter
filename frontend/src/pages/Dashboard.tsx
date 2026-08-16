@@ -150,7 +150,7 @@ export default function Dashboard() {
       </div>
 
       {!loading && total > 0 && (
-        <p className="results-summary" style={{ color: "#555", fontSize: "0.9rem" }}>
+        <p className="results-summary" style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
           Showing {from}–{to} of {total}
         </p>
       )}
