@@ -108,11 +108,11 @@ export async function fetchJob(id: number): Promise<Job> {
   return res.json();
 }
 
-export async function triggerScrape(keywords: string[], locations: string[], maxResults = 150, scrapeAll = false, publishedAt = "") {
+export async function triggerScrape(keywords: string[], locations: string[], maxResults = 150, scrapeAll = false, publishedAt = "", jobType = "") {
   const res = await authFetch(`${API_BASE}/scrape`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ keywords, locations, max_results: maxResults, scrape_all: scrapeAll, published_at: publishedAt }),
+    body: JSON.stringify({ keywords, locations, max_results: maxResults, scrape_all: scrapeAll, published_at: publishedAt, job_type: jobType }),
   });
   return res.json();
 }

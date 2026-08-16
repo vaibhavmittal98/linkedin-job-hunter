@@ -82,6 +82,7 @@ class ScheduledScrape(Base):
     max_results = Column(Integer, default=150)
     scrape_all = Column(Boolean, default=False)
     published_at = Column(String, default="")
+    job_type = Column(String, default="")  # "", "full-time", "part-time", "contract", "internship", "temporary"
     hour = Column(Integer, default=2)
     minute = Column(Integer, default=0)
     frequency = Column(String, default="daily")  # "daily" or "weekly"

@@ -7,6 +7,7 @@ export default function Scrape() {
   const [maxResults, setMaxResults] = useState<number | "">(150);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [publishedAt, setPublishedAt] = useState("");
+  const [jobType, setJobType] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<{ status: string; message: string } | null>(null);
 
@@ -15,7 +16,7 @@ export default function Scrape() {
     setResult(null);
     const kws = keywords.split(",").map(k => k.trim()).filter(Boolean);
     const locs = locations.split(",").map(l => l.trim()).filter(Boolean);
-    const res = await triggerScrape(kws, locs, Math.max(1, Number(maxResults) || 1), scrapeAll, publishedAt);
+    const res = await triggerScrape(kws, locs, Math.max(1, Number(maxResults) || 1), scrapeAll, publishedAt, jobType);
     setResult(res);
     setLoading(false);
   };
@@ -42,6 +43,15 @@ export default function Scrape() {
           <option value="r86400">Last 24 hours</option>
           <option value="r604800">Last week</option>
           <option value="r2592000">Last month</option>
+        </select>
+        <label>Job type</label>
+        <select value={jobType} onChange={(e) => setJobType(e.target.value)}>
+          <option value="">Any type</option>
+          <option value="full-time">Full-time</option>
+          <option value="part-time">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+          <option value="temporary">Temporary</option>
         </select>
         <label>Max results</label>
         <input type="number" min={1} value={maxResults} onChange={(e) => setMaxResults(e.target.value === "" ? "" : Number(e.target.value))} disabled={scrapeAll} />

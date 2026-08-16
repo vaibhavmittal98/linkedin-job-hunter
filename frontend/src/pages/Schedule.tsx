@@ -8,6 +8,7 @@ interface Schedule {
   minute: number;
   scrape_all: boolean;
   published_at: string;
+  job_type: string;
   frequency: string;
   day_of_week: string;
 }
@@ -32,6 +33,7 @@ export default function SchedulePage() {
   const [maxResults, setMaxResults] = useState<number | "">(150);
   const [scrapeAll, setScrapeAll] = useState(false);
   const [publishedAt, setPublishedAt] = useState("r86400");
+  const [jobType, setJobType] = useState("");
   const [frequency, setFrequency] = useState("daily");
   const [dayOfWeek, setDayOfWeek] = useState("mon");
   const [hour, setHour] = useState("2");
@@ -62,7 +64,7 @@ export default function SchedulePage() {
       const res = await fetch("/api/schedules", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+        body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, job_type: jobType, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -110,6 +112,15 @@ export default function SchedulePage() {
           <input type="checkbox" checked={scrapeAll} onChange={(e) => setScrapeAll(e.target.checked)} style={{ width: "auto", marginBottom: 0 }} />
           Scrape all available
         </label>
+        <label>Job type</label>
+        <select value={jobType} onChange={(e) => setJobType(e.target.value)} style={{ marginBottom: "0.75rem" }}>
+          <option value="">Any type</option>
+          <option value="full-time">Full-time</option>
+          <option value="part-time">Part-time</option>
+          <option value="contract">Contract</option>
+          <option value="internship">Internship</option>
+          <option value="temporary">Temporary</option>
+        </select>
         <label>Frequency</label>
         <select value={frequency} onChange={(e) => { setFrequency(e.target.value); setPublishedAt(e.target.value === "weekly" ? "r604800" : "r86400"); }} style={{ marginBottom: "0.75rem" }}>
           <option value="daily">Daily (scrapes last 24h)</option>
@@ -148,7 +159,7 @@ export default function SchedulePage() {
               <div style={{ cursor: "pointer" }} onClick={() => handleShowHistory(s.id)}>
                 <strong>{s.keywords.join(", ")}</strong> — {s.locations.join(", ") || "Any location"}
                 <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-                  Runs {s.frequency === "weekly" ? `weekly on ${s.day_of_week}` : "daily"} at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"} | {s.published_at === "r86400" ? "Last 24h" : s.published_at === "r604800" ? "Last week" : s.published_at === "r2592000" ? "Last month" : "Any time"}
+                  Runs {s.frequency === "weekly" ? `weekly on ${s.day_of_week}` : "daily"} at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"} | {s.published_at === "r86400" ? "Last 24h" : s.published_at === "r604800" ? "Last week" : s.published_at === "r2592000" ? "Last month" : "Any time"}{s.job_type ? ` | ${s.job_type.charAt(0).toUpperCase()}${s.job_type.slice(1)}` : ""}
                 </p>
               </div>
               <button className="btn btn-outline" onClick={() => handleDelete(s.id)} style={{ fontSize: "0.8rem" }}>Delete</button>

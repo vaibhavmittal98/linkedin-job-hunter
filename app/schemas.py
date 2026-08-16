@@ -75,6 +75,7 @@ class ScrapeRequest(BaseModel):
     max_results: int = 150
     scrape_all: bool = False
     published_at: str = ""  # "", "r86400", "r604800", "r2592000"
+    job_type: str = ""  # "", "full-time", "part-time", "contract", "internship", "temporary"
 
 
 class AdhocCoverLetterRequest(BaseModel):

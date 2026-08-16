@@ -19,6 +19,7 @@ class ScheduleRequest(BaseModel):
     max_results: int = 150
     scrape_all: bool = False
     published_at: str = ""
+    job_type: str = ""  # "", "full-time", "part-time", "contract", "internship", "temporary"
     hour: int = 2
     minute: int = 0
     frequency: str = "daily"  # "daily" or "weekly"
@@ -47,6 +48,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
         max_results=req.max_results,
         scrape_all=req.scrape_all,
         published_at=req.published_at,
+        job_type=req.job_type,
         hour=req.hour,
         minute=req.minute,
         frequency=req.frequency,
@@ -70,6 +72,7 @@ def create_schedule(req: ScheduleRequest, db: Session = Depends(get_db), user: U
         frequency=req.frequency,
         day_of_week=req.day_of_week,
         user_id=user.id,
+        job_type=req.job_type,
     )
 
     freq_str = "daily" if req.frequency == "daily" else f"weekly on {req.day_of_week}"
@@ -89,6 +92,7 @@ def get_schedules(user: UserProfile = Depends(get_current_user), db: Session = D
             "minute": s.minute,
             "scrape_all": s.scrape_all,
             "published_at": s.published_at or "",
+            "job_type": s.job_type or "",
             "frequency": s.frequency or "daily",
             "day_of_week": s.day_of_week or "mon",
         }

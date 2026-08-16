@@ -8,7 +8,7 @@ BASE_URL = f"https://api.apify.com/v2/actors/{ACTOR_ID}"
 BRIGHTDATA_BASE = "https://api.brightdata.com/datasets/v3"
 
 
-def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
+def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "", job_type: str = "") -> list[dict]:
     """Dispatch to the configured scraper backend.
 
     Switch backends via SCRAPER_PROVIDER in .env ("apify" | "brightdata").
@@ -19,11 +19,11 @@ def scrape_linkedin_jobs(keywords: list[str], locations: list[str] = [], max_res
     if provider == "brightdata":
         if not settings.brightdata_api_token or settings.brightdata_api_token == "your_brightdata_token_here":
             return _demo_data(keywords, locations, max_results)
-        return _scrape_brightdata(keywords, locations, max_results, scrape_all, published_at)
-    return _scrape_apify(keywords, locations, max_results, scrape_all, published_at)
+        return _scrape_brightdata(keywords, locations, max_results, scrape_all, published_at, job_type)
+    return _scrape_apify(keywords, locations, max_results, scrape_all, published_at, job_type)
 
 
-def _scrape_apify(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
+def _scrape_apify(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "", job_type: str = "") -> list[dict]:
     """Scrape LinkedIn jobs using cheap_scraper/linkedin-job-scraper on Apify."""
     if not settings.apify_api_token or settings.apify_api_token == "your_apify_token_here":
         return _demo_data(keywords, locations, max_results)
@@ -40,6 +40,8 @@ def _scrape_apify(keywords: list[str], locations: list[str] = [], max_results: i
         run_input["maxItems"] = max_results
     if published_at:
         run_input["publishedAt"] = published_at
+    if job_type:
+        run_input["jobType"] = [job_type]
 
     # Start the actor run
     start_resp = httpx.post(
@@ -117,8 +119,17 @@ _BRIGHTDATA_TIME_RANGE = {
     "r2592000": "Past month",
 }
 
+# Map our lowercase job_type -> Bright Data / LinkedIn title-case labels.
+_BRIGHTDATA_JOB_TYPE = {
+    "full-time": "Full-time",
+    "part-time": "Part-time",
+    "contract": "Contract",
+    "internship": "Internship",
+    "temporary": "Temporary",
+}
 
-def _scrape_brightdata(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "") -> list[dict]:
+
+def _scrape_brightdata(keywords: list[str], locations: list[str] = [], max_results: int = 150, scrape_all: bool = False, published_at: str = "", job_type: str = "") -> list[dict]:
     """Scrape LinkedIn jobs via Bright Data's LinkedIn-jobs dataset.
 
     Flow: trigger (discover_new by keyword) -> poll progress -> download snapshot.
@@ -130,6 +141,7 @@ def _scrape_brightdata(keywords: list[str], locations: list[str] = [], max_resul
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
     time_range = _BRIGHTDATA_TIME_RANGE.get(published_at, "")
+    bd_job_type = _BRIGHTDATA_JOB_TYPE.get(job_type, "")
 
     # One input row per keyword x location combination.
     locs = locations or [""]
@@ -141,7 +153,7 @@ def _scrape_brightdata(keywords: list[str], locations: list[str] = [], max_resul
                 "keyword": kw,
                 "country": settings.brightdata_country,
                 "time_range": time_range,
-                "job_type": "",
+                "job_type": bd_job_type,
                 "experience_level": "",
                 "remote": "",
                 "company": "",

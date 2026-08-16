@@ -111,11 +111,11 @@ def get_job(job_id: int, db: Session = Depends(get_db), user: UserProfile = Depe
 @router.post("/scrape")
 def trigger_scrape(req: ScrapeRequest, background_tasks: BackgroundTasks, db: Session = Depends(get_db), user: UserProfile = Depends(get_current_user)):
     """Scrape jobs in background."""
-    background_tasks.add_task(_run_scrape, req.keywords, req.locations, req.max_results, req.scrape_all, req.published_at, user.cv_text, "manual", user.id)
+    background_tasks.add_task(_run_scrape, req.keywords, req.locations, req.max_results, req.scrape_all, req.published_at, user.cv_text, "manual", user.id, req.job_type)
     return {"status": "started", "message": "Scraping started. Jobs will appear on the dashboard soon."}
 
 
-def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, schedule_job_id: str = "manual", user_id: int = None):
+def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scrape_all: bool, published_at: str, cv_text: str, schedule_job_id: str = "manual", user_id: int = None, job_type: str = ""):
     """Background scrape task."""
     from app.db import SessionLocal
     from app.models import ScrapeRun
@@ -123,7 +123,7 @@ def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scr
 
     db = SessionLocal()
     try:
-        raw_jobs = scrape_linkedin_jobs(keywords, locations, max_results, scrape_all, published_at)
+        raw_jobs = scrape_linkedin_jobs(keywords, locations, max_results, scrape_all, published_at, job_type)
         added = 0
         for raw in raw_jobs:
             existing = db.query(Job).filter(Job.linkedin_id == raw.get("linkedin_id"), Job.user_id == user_id).first()
