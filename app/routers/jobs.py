@@ -19,6 +19,21 @@ from app.auth import get_current_user
 router = APIRouter(prefix="/api")
 
 
+def _is_newer(new_posted: str, old_posted: str) -> bool:
+    """True if new_posted is a strictly later date than old_posted.
+
+    posted_at is stored as a date/ISO string: 'YYYY-MM-DD' (Apify) or a full
+    ISO datetime (Bright Data). Comparing the leading 10 chars ('YYYY-MM-DD')
+    is lexicographically equivalent to chronological order and works across
+    both formats. Missing/blank values are treated as "not newer".
+    """
+    if not new_posted:
+        return False
+    if not old_posted:
+        return True
+    return str(new_posted)[:10] > str(old_posted)[:10]
+
+
 @router.get("/jobs", response_model=JobListOut)
 def list_jobs(
     min_score: float = 0,
@@ -128,6 +143,14 @@ def _run_scrape(keywords: list[str], locations: list[str], max_results: int, scr
         for raw in raw_jobs:
             existing = db.query(Job).filter(Job.linkedin_id == raw.get("linkedin_id"), Job.user_id == user_id).first()
             if existing:
+                # Job already seen. If this listing was (re)posted more recently
+                # than what we have, refresh the date so reposts resurface in the
+                # recent-time dashboard filters. Otherwise skip.
+                if _is_newer(raw.get("posted_at"), existing.posted_at):
+                    existing.posted_at = raw.get("posted_at")
+                    existing.scraped_at = datetime.utcnow()
+                    if raw.get("applicants_count"):
+                        existing.applicants_count = raw.get("applicants_count")
                 continue
 
             score = None
