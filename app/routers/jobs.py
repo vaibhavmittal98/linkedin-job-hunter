@@ -317,6 +317,7 @@ Rewrite the cover letter incorporating the feedback. Keep the same style rules:
 - No metrics/numbers from CV
 - Don't regurgitate the CV
 - Don't be abstract about why you're a good fit — just state facts
+- Keep the focus on how you'd contribute to what the role needs, not a recap of past jobs
 - Short and human
 - End with "Best regards,\n{name}" only once
 

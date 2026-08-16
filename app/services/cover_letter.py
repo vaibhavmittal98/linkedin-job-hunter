@@ -22,6 +22,7 @@ Rules:
 - NO metrics, NO percentages, NO numbers from the CV. Don't say "0% to 87%" or "team of 8".
 - Don't list or repeat CV bullet points. The recruiter already has the CV.
 - Instead, briefly connect your relevant experience to what THEY need. Show you understand the role.
+- Anchor it in the job description: focus on how you'd contribute to what THIS role needs (forward-looking), not a summary of what you've done in the past.
 - Pick 1-2 areas where your background clearly fits and explain WHY you'd be effective, not WHAT you did.
 - Keep it to 3 short paragraphs. Under 150 words total.
 - No subject line. Start with "Hi [Company] Team,"
@@ -74,6 +75,7 @@ Rewrite the cover letter incorporating the feedback. Keep the same style rules:
 - No metrics/numbers from CV
 - Don't regurgitate the CV
 - Don't be abstract about why you're a good fit — just state facts
+- Keep the focus on how you'd contribute to what the role needs, not a recap of past jobs
 - Short and human
 - End with "Best regards,\\n{name}" only once
 
