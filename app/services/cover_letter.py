@@ -20,6 +20,7 @@ def generate_cover_letter(job: dict, cv_text: str) -> str:
 Rules:
 - Write like a real person. Conversational, professional, but not stiff.
 - NO metrics, NO percentages, NO numbers from the CV. Don't say "0% to 87%" or "team of 8".
+- Only use facts that are actually in the CV. Do NOT invent or exaggerate experience, skills, tools, or achievements. If something isn't in the CV, don't claim it.
 - Don't list or repeat CV bullet points. The recruiter already has the CV.
 - Instead, briefly connect your relevant experience to what THEY need. Show you understand the role.
 - Anchor it in the job description: focus on how you'd contribute to what THIS role needs (forward-looking), not a summary of what you've done in the past.
@@ -73,6 +74,7 @@ USER FEEDBACK: {feedback}
 Rewrite the cover letter incorporating the feedback. Keep the same style rules:
 - Conversational, professional, no buzzwords, no pretentious language
 - No metrics/numbers from CV
+- Only use facts from the CV — don't invent or exaggerate experience, skills, or achievements
 - Don't regurgitate the CV
 - Don't be abstract about why you're a good fit — just state facts
 - Keep the focus on how you'd contribute to what the role needs, not a recap of past jobs

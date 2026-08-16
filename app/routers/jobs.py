@@ -315,6 +315,7 @@ USER FEEDBACK: {feedback.get("message", "")}
 Rewrite the cover letter incorporating the feedback. Keep the same style rules:
 - Conversational, professional, no buzzwords, no pretentious language
 - No metrics/numbers from CV
+- Only use facts from the CV — don't invent or exaggerate experience, skills, or achievements
 - Don't regurgitate the CV
 - Don't be abstract about why you're a good fit — just state facts
 - Keep the focus on how you'd contribute to what the role needs, not a recap of past jobs
