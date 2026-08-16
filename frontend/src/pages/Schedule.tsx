@@ -6,6 +6,7 @@ interface Schedule {
   locations: string[];
   hour: number;
   minute: number;
+  max_results: number;
   scrape_all: boolean;
   published_at: string;
   job_type: string;
@@ -40,6 +41,7 @@ export default function SchedulePage() {
   const [minute, setMinute] = useState("0");
   const [message, setMessage] = useState("");
   const [creating, setCreating] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [history, setHistory] = useState<RunHistory[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
 
@@ -51,6 +53,36 @@ export default function SchedulePage() {
 
   useEffect(() => { loadSchedules(); }, []);
 
+  const resetForm = () => {
+    setEditingId(null);
+    setKeywords("");
+    setLocations("");
+    setMaxResults(150);
+    setScrapeAll(false);
+    setPublishedAt("r86400");
+    setJobType("");
+    setFrequency("daily");
+    setDayOfWeek("mon");
+    setHour("2");
+    setMinute("0");
+  };
+
+  const startEdit = (s: Schedule) => {
+    setEditingId(s.id);
+    setKeywords(s.keywords.join(", "));
+    setLocations(s.locations.join(", "));
+    setMaxResults(s.max_results);
+    setScrapeAll(s.scrape_all);
+    setPublishedAt(s.published_at || "r86400");
+    setJobType(s.job_type || "");
+    setFrequency(s.frequency || "daily");
+    setDayOfWeek(s.day_of_week || "mon");
+    setHour(String(s.hour));
+    setMinute(String(s.minute));
+    setMessage("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const handleCreate = async () => {
     setCreating(true);
     setMessage("");
@@ -61,14 +93,17 @@ export default function SchedulePage() {
         setMessage("Please enter at least one keyword");
         return;
       }
-      const res = await fetch("/api/schedules", {
-        method: "POST",
+      const body = JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, job_type: jobType, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 });
+      const res = await fetch(editingId ? `/api/schedules/${editingId}` : "/api/schedules", {
+        method: editingId ? "PUT" : "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ keywords: kws, locations: locs, max_results: Math.max(1, Number(maxResults) || 1), scrape_all: scrapeAll, published_at: publishedAt, job_type: jobType, frequency, day_of_week: dayOfWeek, hour: Number(hour) || 0, minute: Number(minute) || 0 }),
+        body,
       });
       const data = await res.json();
       if (res.ok) {
-        setMessage(`Scheduled: runs daily at ${String(Number(hour) || 0).padStart(2, "0")}:${String(Number(minute) || 0).padStart(2, "0")}`);
+        const freqStr = frequency === "weekly" ? `weekly on ${dayOfWeek}` : "daily";
+        setMessage(`${editingId ? "Updated" : "Scheduled"}: runs ${freqStr} at ${String(Number(hour) || 0).padStart(2, "0")}:${String(Number(minute) || 0).padStart(2, "0")}`);
+        resetForm();
         loadSchedules();
       } else {
         setMessage(data.detail || `Error: ${res.status}`);
@@ -83,6 +118,7 @@ export default function SchedulePage() {
   const handleDelete = async (id: string) => {
     await fetch(`/api/schedules/${id}`, { method: "DELETE", headers: authHeaders() });
     if (selectedSchedule === id) { setSelectedSchedule(null); setHistory([]); }
+    if (editingId === id) resetForm();
     loadSchedules();
   };
 
@@ -101,7 +137,7 @@ export default function SchedulePage() {
       </p>
 
       <div className="card">
-        <h2>Create Schedule</h2>
+        <h2>{editingId ? "Edit Schedule" : "Create Schedule"}</h2>
         <label>Keywords (comma-separated)</label>
         <input value={keywords} onChange={(e) => setKeywords(e.target.value)} placeholder="Software Engineer, Backend Developer" />
         <label>Locations (comma-separated)</label>
@@ -146,8 +182,9 @@ export default function SchedulePage() {
           <span style={{ alignSelf: "center" }}>:</span>
           <input type="text" maxLength={2} value={minute} onChange={(e) => setMinute(e.target.value.replace(/\D/g, "").slice(0, 2))} placeholder="0" style={{ width: "60px", textAlign: "center" }} />
         </div>
-        <button className="btn" onClick={handleCreate} disabled={!keywords || creating}>{creating ? "Creating..." : "Create Schedule"}</button>
-        {message && <p style={{ marginTop: "0.5rem", color: message.startsWith("Scheduled") ? "green" : "red" }}>{message}</p>}
+        <button className="btn" onClick={handleCreate} disabled={!keywords || creating}>{creating ? (editingId ? "Saving..." : "Creating...") : (editingId ? "Save Changes" : "Create Schedule")}</button>
+        {editingId && <button className="btn btn-outline" onClick={resetForm} disabled={creating} style={{ marginLeft: "0.5rem" }}>Cancel</button>}
+        {message && <p style={{ marginTop: "0.5rem", color: message.startsWith("Scheduled") || message.startsWith("Updated") ? "green" : "red" }}>{message}</p>}
       </div>
 
       <div className="card">
@@ -162,7 +199,10 @@ export default function SchedulePage() {
                   Runs {s.frequency === "weekly" ? `weekly on ${s.day_of_week}` : "daily"} at {String(s.hour).padStart(2, "0")}:{String(s.minute).padStart(2, "0")} | {s.scrape_all ? "All available" : "Limited"} | {s.published_at === "r86400" ? "Last 24h" : s.published_at === "r604800" ? "Last week" : s.published_at === "r2592000" ? "Last month" : "Any time"}{s.job_type ? ` | ${s.job_type.charAt(0).toUpperCase()}${s.job_type.slice(1)}` : ""}
                 </p>
               </div>
-              <button className="btn btn-outline" onClick={() => handleDelete(s.id)} style={{ fontSize: "0.8rem" }}>Delete</button>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <button className="btn btn-outline" onClick={() => startEdit(s)} style={{ fontSize: "0.8rem" }}>Edit</button>
+                <button className="btn btn-outline" onClick={() => handleDelete(s.id)} style={{ fontSize: "0.8rem" }}>Delete</button>
+              </div>
             </div>
             {selectedSchedule === s.id && (
               <div style={{ padding: "0.75rem", background: "var(--surface-2)", borderRadius: "6px", marginBottom: "0.5rem" }}>
